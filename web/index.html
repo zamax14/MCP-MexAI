@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Banco de indicadores</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: light-dark(#faf7f2, #17151c);
+    --panel: light-dark(#ffffff, #211e29);
+    --text: light-dark(#23202b, #ece8f3);
+    --muted: light-dark(#6b6678, #a39db3);
+    --line: light-dark(#e4dfd6, #35303f);
+    --accent: light-dark(#6b3fa0, #b794f4);
+    --accent-text: light-dark(#ffffff, #17151c);
+    --warn: light-dark(#8a5a00, #f2c14e);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.5 system-ui, sans-serif; background: var(--bg); color: var(--text); }
+  header, footer { padding: 16px 24px; }
+  header { border-bottom: 1px solid var(--line); }
+  h1 { margin: 0; font-size: 1.25rem; }
+  header p, .muted { margin: 0; color: var(--muted); font-size: .9rem; }
+  .layout { display: grid; grid-template-columns: 280px 1fr; gap: 24px; padding: 24px; align-items: start; }
+  @media (max-width: 720px) { .layout { grid-template-columns: 1fr; padding: 16px; } }
+  nav h2 { margin: 16px 0 4px; font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  nav h2:first-child { margin-top: 0; }
+  nav button { display: block; width: 100%; text-align: left; padding: 8px 10px; border: 0; border-radius: 6px;
+               background: none; color: inherit; font: inherit; cursor: pointer; }
+  nav button:hover { background: var(--panel); }
+  nav button[aria-current] { background: var(--accent); color: var(--accent-text); }
+  main { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 24px; }
+  main h2 { margin: 0 0 4px; font-size: 1.4rem; }
+  dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 16px 0; font-size: .9rem; }
+  dt { color: var(--muted); }
+  dd { margin: 0; }
+  .notas { border-left: 3px solid var(--warn); padding: 4px 12px; margin: 16px 0; font-size: .9rem; }
+  form { display: flex; flex-wrap: wrap; gap: 16px; align-items: start; margin: 24px 0 16px; }
+  label { display: grid; gap: 4px; font-size: .85rem; font-weight: 600; }
+  label small { font-weight: 400; color: var(--muted); max-width: 30ch; }
+  input { font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px;
+          background: var(--bg); color: inherit; width: 14ch; }
+  form button { font: inherit; padding: 8px 18px; border: 0; border-radius: 6px; background: var(--accent);
+                color: var(--accent-text); font-weight: 600; cursor: pointer; margin-top: 24px; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .tabla { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: .9rem; font-variant-numeric: tabular-nums; }
+  th, td { padding: 6px 12px; border-bottom: 1px solid var(--line); text-align: left; }
+  th { color: var(--muted); font-weight: 600; }
+  td:last-child, th:last-child { text-align: right; }
+  [role="alert"] { color: var(--warn); font-weight: 600; }
+  footer { border-top: 1px solid var(--line); font-size: .9rem; color: var(--muted); }
+  code { font: .9em ui-monospace, monospace; background: var(--panel); border: 1px solid var(--line);
+         border-radius: 4px; padding: 1px 6px; color: var(--text); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Banco de indicadores</h1>
+  <p>Un catálogo de consultas declarado en manifiestos YAML. Esta página solo usa la API REST.</p>
+</header>
+
+<div class="layout">
+  <nav id="lista" aria-label="Indicadores"></nav>
+  <main id="ficha" aria-live="polite"><p class="muted">Elige un indicador de la lista.</p></main>
+</div>
+
+<footer id="mcp">Comprobando si esta API también habla MCP…</footer>
+
+<script>
+const lista = document.getElementById("lista");
+const ficha = document.getElementById("ficha");
+
+// Todo lo que viene de la API entra como nodo de texto, nunca como HTML.
+function el(tag, props = {}, ...children) {
+  const node = Object.assign(document.createElement(tag), props);
+  node.append(...children);
+  return node;
+}
+
+async function api(path, options) {
+  const response = await fetch(path, options);
+  const body = await response.json();
+  if (!response.ok) throw new Error(body.detail || response.statusText);
+  return body;
+}
+
+async function cargarLista() {
+  const indicadores = await api("/v1/indicadores");
+  for (const tema of [...new Set(indicadores.map(i => i.tema))]) {
+    lista.append(el("h2", { textContent: tema }));
+    for (const ind of indicadores.filter(i => i.tema === tema)) {
+      const boton = el("button", { type: "button", textContent: ind.nombre });
+      boton.dataset.id = ind.id;
+      boton.addEventListener("click", () => { location.hash = ind.id; });
+      lista.append(boton);
+    }
+  }
+}
+
+// El indicador elegido vive en la URL: recargar o compartir el enlace lo conserva.
+function elegir() {
+  const id = decodeURIComponent(location.hash.slice(1));
+  if (!id) return;
+  for (const boton of lista.querySelectorAll("button")) {
+    boton.toggleAttribute("aria-current", boton.dataset.id === id);
+  }
+  mostrar(id).catch(error => ficha.replaceChildren(el("p", { role: "alert", textContent: error.message })));
+}
+
+async function mostrar(id) {
+  const ind = await api(`/v1/indicadores/${encodeURIComponent(id)}`);
+  const resultado = el("div");
+
+  // El formulario sale de los parámetros que declara el manifiesto: no hay uno por indicador.
+  const form = el("form");
+  for (const p of ind.parametros) {
+    form.append(el("label", {},
+      p.nombre + (p.requerido ? " *" : ""),
+      el("input", { name: p.nombre, type: p.tipo === "int" ? "number" : "text", required: p.requerido }),
+      el("small", { textContent: p.descripcion })));
+  }
+  form.append(el("button", { type: "submit", textContent: "Consultar" }));
+  form.addEventListener("submit", evento => {
+    evento.preventDefault();
+    const parametros = {};
+    for (const [nombre, valor] of new FormData(form)) if (valor !== "") parametros[nombre] = valor;
+    consultar(id, parametros, resultado);
+  });
+
+  ficha.replaceChildren(
+    el("h2", { textContent: ind.nombre }),
+    el("p", { textContent: ind.definicion }),
+    el("dl", {},
+      el("dt", { textContent: "Unidad" }), el("dd", { textContent: ind.unidad }),
+      el("dt", { textContent: "Periodicidad" }), el("dd", { textContent: ind.periodicidad }),
+      el("dt", { textContent: "Fuente" }), el("dd", { textContent: ind.fuente })),
+    ...(ind.notas ? [el("p", { className: "notas", textContent: ind.notas })] : []),
+    form,
+    resultado);
+
+  // La serie completa se muestra de entrada, salvo que el indicador exija algún parámetro.
+  if (!ind.parametros.some(p => p.requerido)) consultar(id, {}, resultado);
+}
+
+async function consultar(id, parametros, destino) {
+  try {
+    const datos = await api(`/v1/indicadores/${encodeURIComponent(id)}/datos`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ parametros }),
+    });
+    const columnas = Object.keys(datos.filas[0] ?? {});
+    destino.replaceChildren(
+      el("p", { className: "muted", textContent: `${datos.filas.length} filas · ${datos.unidad}` }),
+      el("div", { className: "tabla" },
+        el("table", {},
+          el("thead", {}, el("tr", {}, ...columnas.map(c => el("th", { scope: "col", textContent: c })))),
+          el("tbody", {}, ...datos.filas.map(fila =>
+            el("tr", {}, ...columnas.map(c => el("td", { textContent: fila[c] ?? "—" }))))))));
+  } catch (error) {
+    destino.replaceChildren(el("p", { role: "alert", textContent: error.message }));
+  }
+}
+
+// Si el servidor arrancó con `app.api:app` no hay /mcp y esto responde 404: es el «antes» de la charla.
+// Con MCP responde 400, porque un GET suelto no trae sesión; basta con que no sea 404.
+async function comprobarMcp() {
+  const pie = document.getElementById("mcp");
+  const { status } = await fetch("/mcp");
+  pie.replaceChildren(...(status === 404
+    ? ["Esta API solo habla REST. Todavía no es un servidor MCP."]
+    : ["Esta misma API también es un servidor MCP: conecta tu asistente a ",
+       el("code", { textContent: `${location.origin}/mcp` })]));
+}
+
+cargarLista().then(elegir, error => lista.replaceChildren(el("p", { role: "alert", textContent: error.message })));
+addEventListener("hashchange", elegir);
+comprobarMcp();
+</script>
+</body>
+</html>
