@@ -3,3 +3,20 @@ __pycache__/
 .venv/
 .env
 .deck-build/node_modules/
+
+# Material local de desarrollo de la presentación
+.deck-build/
+.impeccable/
+DESIGN.md
+PRODUCT.md
+preguntas.md
+guia_presentacion_mcp_mexai_para_codex.md
+build_deck.mjs
+redesign_deck.mjs
+anatomia_mcp.mjs
+correcciones_mcp.mjs
+output/redesign-review/
+assets/referencias/
+
+# Archivos de bloqueo de LibreOffice
+.~lock.*#
