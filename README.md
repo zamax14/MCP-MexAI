@@ -42,7 +42,7 @@ el esquema de sus tipos:
 | `POST /v1/indicadores/{id}/datos` | `consultar_indicador` |
 
 Para ver el «antes», cambia `app.main:app` por `app.api:app` en `compose.yaml`: la web sigue
-funcionando y su pie de página avisa que ya no hay MCP.
+funcionando y avisa, arriba a la derecha, que el servidor ya no habla MCP.
 
 ## Agregar un indicador
 
@@ -67,6 +67,9 @@ sql: |
   FROM empleo_municipal
   WHERE (CAST(:anio_min AS integer) IS NULL OR anio >= CAST(:anio_min AS integer))
 ```
+
+Si el `sql` devuelve las columnas `cve_geo`, `nombre_geo`, `periodo` y `valor`, la web lo cruza en una
+tabla de lugar por periodo y lo grafica; con otras columnas muestra la tabla tal cual.
 
 Un manifiesto inválido impide arrancar y el error nombra el archivo. Se valida que no haya campos
 desconocidos, que el `sql` empiece con `SELECT` o `WITH` y que los `parametros` declarados sean
