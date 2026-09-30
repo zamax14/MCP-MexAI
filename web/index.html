@@ -1,143 +1,236 @@
 <!doctype html>
-<html lang="es">
+<html lang="es-MX">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Distribuidora Aurora, portal de consultas</title>
-<link rel="icon" href="data:,">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Sin red la página cae a la fuente del sistema: la demo no depende de esto. -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&display=swap">
+<meta name="color-scheme" content="light">
+<title>Portal de consultas · Distribuidora Aurora</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='2' fill='%23ffc800'/%3E%3Cpath d='M5.5 15a6.5 6.5 0 0 1 13 0zM4 17h16v2.2H4z' fill='%2315181b'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/overpass.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+  /* Overpass desciende de Highway Gothic, la letra de las señales de carretera. Se sirve desde
+     aquí mismo: el portal no le pide nada a internet. */
+  @font-face { font-family: "Overpass"; src: url("fonts/overpass.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+  @font-face { font-family: "Overpass Mono"; src: url("fonts/overpass-mono.woff2") format("woff2"); font-weight: 300 700; font-display: swap; }
+
   :root {
-    color-scheme: light dark;
-    --paper: light-dark(#f4f3f8, #121019);
-    --surface: light-dark(#ffffff, #1b1826);
-    --ink: light-dark(#1b1630, #f2f0f8);
-    --ink-2: light-dark(#55506a, #bdb8cf);
-    --muted: light-dark(#7d7892, #8c87a0);
-    --line: light-dark(#e2dfec, #2e2a3d);
-    --brand: light-dark(#5b2ea6, #b79af0);
-    --brand-ink: light-dark(#ffffff, #17131f);
-    --brand-wash: light-dark(#efe9fa, #2a2340);
-    --bar: #1b1630;
-    --bar-ink: #f2f0f8;
-    --bar-muted: #a9a3c2;
-    --warn: light-dark(#8a5a00, #f2c14e);
-    --sans: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
-    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+    --negro: #15181b;          /* placas y texto */
+    --blanco: #fff;
+    --concreto: #eceeeb;       /* segunda capa: directorio y encabezado de la tabla */
+    --concreto-2: #dfe2de;
+    --regla: #c5c9c4;
+    --tinta-2: #454c52;
+    --borde-campo: #7d858b;
+    --amarillo: #ffc800;       /* la marca, «aquí» y actuar; nada más */
+    --amarillo-2: #ebb800;
+    --sobre-negro-2: #d3d7da;
+    --sobre-negro-3: #9da4a9;
+    --regla-sobre-negro: #5d656b;
+    --verde: #1e7d4f;          /* verde y rojo, solo para el estado de la petición */
+    --rojo: #c0271b;
+    --sans: "Overpass", system-ui, sans-serif;
+    --mono: "Overpass Mono", ui-monospace, monospace;
+    --salida: cubic-bezier(.16, 1, .3, 1);
+    --i-flecha: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2315181b' stroke-width='2' stroke-linecap='square'%3E%3Cpath d='M2.5 8h10M8.5 3.5 13 8l-4.5 4.5'/%3E%3C/svg%3E");
+    --i-bajar: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2315181b' stroke-width='2' stroke-linecap='square'%3E%3Cpath d='M8 2v8.5M4 7l4 4 4-4M2.5 14h11'/%3E%3C/svg%3E");
+    --i-lista: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2315181b' stroke-width='2' stroke-linecap='square'%3E%3Cpath d='M2.5 4h11M2.5 8h11M2.5 12h11'/%3E%3C/svg%3E");
+    --i-lupa: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23454c52' stroke-width='2' stroke-linecap='square'%3E%3Ccircle cx='7' cy='7' r='4.5'/%3E%3Cpath d='m10.5 10.5 3 3'/%3E%3C/svg%3E");
   }
+
   * { box-sizing: border-box; }
   html, body { height: 100%; }
-  body { margin: 0; font: 15px/1.5 var(--sans); background: var(--paper); color: var(--ink);
-         display: grid; grid-template-rows: auto 1fr; }
+  body { margin: 0; display: grid; grid-template-rows: auto minmax(0, 1fr);
+         font: 15px/1.45 var(--sans); font-variant-numeric: tabular-nums; color: var(--negro); background: var(--blanco);
+         accent-color: var(--negro); caret-color: var(--negro); scrollbar-color: #a3a9a6 transparent; }
   button, input { font: inherit; color: inherit; }
-  :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  a { color: inherit; text-underline-offset: .2em; }
+  ::selection { background: var(--amarillo); color: var(--negro); }
+  ::placeholder { color: #667077; opacity: 1; }
+  :focus-visible { outline: 2px solid var(--negro); outline-offset: 2px; }
+  .saltar { position: absolute; left: -999px; z-index: 5; padding: 8px 12px; background: var(--amarillo); font-weight: 700; }
+  .saltar:focus { left: 8px; top: 6px; }
 
-  /* Barra superior */
-  .bar { background: var(--bar); color: var(--bar-ink); padding: 14px 24px; display: flex; gap: 12px 32px;
-         align-items: center; justify-content: space-between; flex-wrap: wrap; }
-  .bar h1 { margin: 0; font-size: 1.35rem; font-weight: 800; font-stretch: 118%; letter-spacing: -.01em; }
-  .bar p { margin: 0; color: var(--bar-muted); font-size: .85rem; }
-  .pill { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 99px;
-          border: 1px solid #3a3357; font-size: .85rem; }
-  .pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #5ed39a; }
+  /* Barra de la empresa */
+  .barra { display: flex; align-items: center; gap: 0 24px; min-height: 48px; padding: 0 24px 0 16px; border-bottom: 1px solid var(--regla); }
+  .barra p { margin: 0; }
+  .marca { display: flex; align-items: center; gap: 10px; font-size: 16px; font-weight: 800; white-space: nowrap; }
+  .marca svg { flex: none; width: 26px; height: 26px; }
+  .marca span { margin-left: 2px; padding-left: 12px; border-left: 1px solid var(--regla); font-size: 15px; font-weight: 400; color: var(--tinta-2); }
+  .meta { display: flex; align-items: center; gap: 24px; margin-left: auto; font-size: 13.5px; color: var(--tinta-2); }
+  .meta a { font-weight: 700; color: var(--negro); }
 
-  /* Estructura */
-  .layout { display: grid; grid-template-columns: 320px minmax(0, 1fr); min-height: 0; }
-  aside { border-right: 1px solid var(--line); background: var(--surface); padding: 20px; overflow-y: auto; }
-  main { padding: 24px; overflow-y: auto; }
-  @media (max-width: 860px) {
-    body { display: block; }
-    .layout { grid-template-columns: 1fr; }
-    aside { border-right: 0; border-bottom: 1px solid var(--line); }
-    main { padding: 16px; }
-  }
-  .paso { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; font-size: 1rem; font-weight: 700; }
-  aside .paso:not(:first-child) { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
-  .paso b { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
-            background: var(--brand); color: var(--brand-ink); font-size: .8rem; }
-  .vacio { color: var(--muted); margin: 0; }
+  /* Botones: una sola forma en todo el portal. El estado se nota en el cuerpo, no solo en el color. */
+  .boton { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 1px 16px 0; border: 1px solid var(--negro);
+           border-radius: 2px; background: var(--blanco); font-size: 14.5px; font-weight: 700; white-space: nowrap; cursor: pointer; }
+  .boton:hover { background: var(--concreto); }
+  .boton:active, .boton[aria-expanded="true"] { transform: translateY(1px); background: var(--concreto-2); }
+  .boton.primario { background: var(--amarillo); }
+  .boton.primario:hover, .boton.primario:active { background: var(--amarillo-2); }
+  .boton:disabled { border-color: var(--regla); background: var(--concreto); color: #626a70; cursor: default; transform: none; }
+  .boton.bajar::before, .boton.alternar::before { content: ""; width: 16px; height: 16px; margin-top: -1px; background: var(--i-bajar); }
+  .boton.alternar { display: none; }
+  .boton.alternar::before { background: var(--i-lista); }
 
-  /* Paso 1: el catálogo */
-  .buscar { width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px;
-            background: var(--paper); margin-bottom: 8px; }
-  .sistema { margin: 14px 2px 4px; font-size: .8rem; font-weight: 600; color: var(--muted); }
-  .item { display: block; width: calc(100% + 8px); margin: 0 -4px 2px; padding: 8px 10px; border: 0; border-radius: 8px;
-          background: none; text-align: left; cursor: pointer; }
-  .item:hover { background: var(--paper); }
-  .item[aria-current] { background: var(--brand-wash); font-weight: 700; box-shadow: inset 3px 0 var(--brand); }
+  /* Estructura: directorio a la izquierda; a la derecha placa, filtros, tabla y ruta, siempre en ese orden */
+  .marco { display: grid; grid-template-columns: 288px minmax(0, 1fr); min-height: 0; }
+  main { display: grid; grid-template-rows: auto auto minmax(180px, 1fr) auto; min-height: 0; overflow-y: auto; }
+  .vacio { margin: 0; color: var(--tinta-2); }
 
-  /* Paso 2: los filtros */
-  form { display: grid; gap: 14px; }
-  .campo { display: grid; gap: 4px; font-size: .85rem; font-weight: 700; }
-  .campo small { font-weight: 400; color: var(--muted); }
-  .campo input { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); width: 100%; }
-  .primario { padding: 10px 22px; border: 0; border-radius: 8px; background: var(--brand);
-              color: var(--brand-ink); font-weight: 700; cursor: pointer; }
-  .primario:hover { filter: brightness(1.1); }
+  /* Directorio */
+  .directorio { display: flex; flex-direction: column; min-height: 0; overflow-y: auto; background: var(--concreto); border-right: 1px solid var(--regla); }
+  .buscar { flex: none; height: 36px; margin: 16px 16px 2px; padding: 1px 10px 0 34px; border: 1px solid var(--borde-campo); border-radius: 2px;
+            background: var(--blanco) var(--i-lupa) 10px 50% / 16px no-repeat; }
+  .buscar::-webkit-search-cancel-button { filter: grayscale(1) brightness(.2); cursor: pointer; }
+  #catalogo { display: flex; flex-direction: column; padding-bottom: 16px; }
+  #catalogo .vacio { padding: 18px 16px 0; font-size: 14px; }
+  .rotulo { align-self: start; margin: 18px 16px 6px; padding: 5px 9px 3px; border-radius: 2px; background: var(--negro); color: var(--blanco);
+            font-size: 11.5px; line-height: 1.2; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+  #catalogo a { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 9px 16px 8px; text-decoration: none; }
+  #catalogo a:hover { background: var(--concreto-2); }
+  #catalogo a:active { background: var(--regla); }
+  #catalogo a:focus-visible { outline-offset: -2px; }
+  #catalogo a[aria-current] { background: var(--amarillo); font-weight: 700; view-transition-name: aqui; }
+  #catalogo a[aria-current]::after { content: ""; flex: none; width: 16px; height: 16px; background: var(--i-flecha); }
+  .pie:empty { display: none; }
+  .pie { margin: auto 16px 0; padding: 12px 0 14px; border-top: 1px solid var(--regla); font-size: 13px; color: var(--tinta-2); }
 
-  /* Paso 3: el resultado */
-  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; min-width: 0; }
-  #resultado { transition: opacity .15s; }
-  #resultado.cargando { opacity: .5; }
-  .cabecera { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); gap: 16px 40px; align-items: start; }
-  @media (max-width: 1100px) { .cabecera { grid-template-columns: minmax(0, 1fr); } }
-  .origen { margin: 0 0 4px; color: var(--brand); font-weight: 700; font-size: .9rem; }
-  .titulo { margin: 0; font-size: 1.7rem; line-height: 1.15; font-weight: 800; font-stretch: 112%; letter-spacing: -.015em; }
-  .descripcion { margin: 8px 0 0; color: var(--ink-2); max-width: 70ch; }
-  .nota { margin: 0; padding: 8px 14px; border-left: 3px solid var(--warn); background: var(--paper);
-          border-radius: 0 8px 8px 0; font-size: .9rem; }
-  [role="alert"] { color: var(--warn); font-weight: 700; }
+  /* Placa: a dónde llegaste. El nombre de la consulta y su dirección en la API. */
+  .placa { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 30rem); gap: 12px 48px; align-items: start;
+           min-height: 112px; padding: 22px 24px 20px; background: var(--negro); color: var(--blanco); }
+  .placa h1 { margin: 0; font-size: 28px; line-height: 1.12; font-weight: 800; letter-spacing: -.012em; text-wrap: balance; }
+  .direccion { display: inline-block; margin-top: 8px; font: 500 16px/1.3 var(--mono); font-variant-ligatures: none; color: var(--amarillo);
+               text-decoration: none; overflow-wrap: anywhere; }
+  .direccion:hover { text-decoration: underline; }
+  .placa p { margin: 3px 0 0; font-size: 14.5px; line-height: 1.5; color: var(--sobre-negro-2); text-wrap: pretty; }
+  .placa p b { color: var(--blanco); }
+  .placa :focus-visible, .ruta :focus-visible { outline-color: var(--amarillo); }
 
-  /* La petición que esta página le hizo a la API */
-  .peticion { margin: 20px 0 0; background: var(--bar); color: var(--bar-ink); border-radius: 10px; padding: 12px 16px;
-              display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px 14px; align-items: start; }
-  .peticion p { margin: 0; grid-column: 1 / -1; color: var(--bar-muted); font-size: .8rem; }
-  .peticion code { font: 13px/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
-  .peticion button { border: 1px solid #3a3357; background: none; color: var(--bar-ink); border-radius: 6px;
-                     padding: 2px 10px; cursor: pointer; font-size: .8rem; }
-  .peticion button:hover { background: #2a2346; }
-  .peticion :focus-visible { outline-color: #f5c518; }
+  /* Filtros, generados de los parámetros que declara la consulta */
+  .filtros { min-height: 87px; padding: 12px 24px 14px; border-bottom: 1px solid var(--regla); }
+  .filtros .vacio { padding-top: 26px; }
+  .filtros form { display: flex; flex-wrap: wrap; align-items: end; gap: 12px 16px; }
+  .campo { position: relative; flex: 1 1 150px; max-width: 232px; display: grid; gap: 4px; }
+  .acciones { display: flex; gap: 8px; }
+  .campo label { font: 600 13px/1.3 var(--mono); }
+  .campo input { width: 100%; height: 36px; padding: 1px 10px 0; border: 1px solid var(--borde-campo); border-radius: 2px; background: var(--blanco); font-size: 14.5px; }
+  .campo input:hover { border-color: var(--negro); }
+  /* La indicación de cada filtro aparece donde se necesita: al entrar al campo. */
+  .ayuda { display: none; position: absolute; z-index: 2; top: calc(100% + 6px); left: 0; right: 0; margin: 0; padding: 8px 10px 7px;
+           border-radius: 2px; background: var(--negro); color: var(--blanco); font-size: 12.5px; line-height: 1.4; }
+  .campo:focus-within .ayuda { display: block; }
 
-  /* Tabla */
-  .acciones { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 24px 0 8px; }
-  .acciones p { margin: 0; color: var(--muted); font-size: .85rem; }
-  .secundario { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 14px; cursor: pointer; }
-  .secundario:hover { border-color: var(--brand); }
-  .tabla { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
-  table { border-collapse: collapse; width: 100%; font-size: .9rem; font-variant-numeric: tabular-nums; }
-  th, td { padding: 8px 14px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--line); }
-  tr:last-child td { border-bottom: 0; }
-  th { color: var(--muted); font-weight: 600; font-size: .85rem; background: var(--paper); }
-  tbody tr:hover { background: var(--paper); }
+  /* Resultado */
+  .resultado { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+  .resultado[aria-busy="true"] > * { opacity: .45; }
+  .datos { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 20px; min-height: 56px; padding: 8px 24px; }
+  .datos strong { white-space: nowrap; }
+  .datos p { max-width: 75ch; margin: 0 auto 0 0; font-size: 13.5px; color: var(--tinta-2); }
+  .tabla { min-height: 0; overflow: auto; border-top: 1px solid var(--regla); }
+  table { min-width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14.5px; }
+  th, td { padding: 8px 18px 7px; border-bottom: 1px solid var(--concreto-2); text-align: left; white-space: nowrap; }
+  th:first-child, td:first-child { padding-left: 24px; }
+  th { position: sticky; top: 0; z-index: 1; padding-block: 9px 7px; border-bottom: 2px solid var(--negro); background: var(--concreto);
+       font: 600 12.5px/1.5 var(--mono); }
+  td.dato { font: 400 13.5px/1.45 var(--mono); }
   .num { text-align: right; }
+  .relleno { width: 100%; padding: 0; }   /* se lleva el ancho que sobra: las columnas quedan juntas */
+  tbody tr:hover td { background: #f5f6f4; }
+  .aviso { max-width: calc(72ch + 48px); padding: 28px 24px; }
+  .aviso h2 { display: flex; align-items: center; gap: 10px; margin: 0 0 6px; font-size: 18px; line-height: 1.25; }
+  .aviso .estado { color: var(--blanco); font: 700 13px/1.5 var(--mono); }
+  .aviso p { margin: 0 0 16px; color: var(--tinta-2); }
+
+  /* Ruta: la petición que sostiene la tabla, con su estado y su tiempo */
+  .ruta { display: flex; align-items: center; gap: 6px 14px; min-height: 46px; padding: 8px 16px 8px 24px; background: var(--negro); color: var(--blanco);
+          font: 500 13px/1.5 var(--mono); font-variant-ligatures: none; }
+  .ruta code { flex: 1 1 0; min-width: 0; font: inherit; color: var(--sobre-negro-3); overflow-wrap: anywhere; }
+  .ruta code b { font-weight: 500; color: var(--blanco); }
+  .metodo, .estado { flex: none; padding: 2px 7px 1px; border-radius: 2px; font-weight: 700; white-space: nowrap; }
+  .ruta > span:not([class]) { white-space: nowrap; }
+  .metodo { background: var(--amarillo); color: var(--negro); }
+  .estado.ok { background: var(--verde); }
+  .estado.error { background: var(--rojo); }
+  .estado.pendiente { outline: 1px solid var(--regla-sobre-negro); outline-offset: -1px; color: var(--sobre-negro-2); font-weight: 500; }
+  .ruta button { flex: none; height: 30px; padding: 1px 12px 0; border: 1px solid var(--regla-sobre-negro); border-radius: 2px; background: none; color: inherit;
+                 font: 700 13px var(--sans); cursor: pointer; }
+  .ruta button:hover { background: #2a2f34; }
+  .ruta button:active { transform: translateY(1px); background: #363c42; }
+
+  /* El único movimiento: la placa amarilla se desliza a la consulta nueva. */
+  ::view-transition-old(root), ::view-transition-old(aqui) { display: none; }
+  ::view-transition-new(root), ::view-transition-new(aqui) { animation: none; }
+  ::view-transition-group(aqui) { animation-duration: .2s; animation-timing-function: var(--salida); }
+  @media (prefers-reduced-motion: reduce) { ::view-transition-group(aqui) { animation: none; } }
+
+  @media (max-width: 1399px) { .placa { grid-template-columns: minmax(0, 1fr) minmax(0, 24rem); min-height: 122px; padding: 16px 24px 14px; } }
+  @media (max-width: 1099px) {
+    .marco { grid-template-columns: 248px minmax(0, 1fr); }
+    .placa { grid-template-columns: minmax(0, 1fr); }
+    .placa p { max-width: 70ch; }
+  }
+  @media (max-width: 899px) {
+    html, body { height: auto; }
+    body, .marco { display: block; }
+    .barra { flex-wrap: wrap; gap: 0 12px; padding: 6px 16px 0; }
+    .marca { font-size: 15px; }
+    .marca span { display: none; }
+    .boton.alternar { display: inline-flex; margin-left: auto; }
+    .meta { order: 1; flex-basis: 100%; justify-content: space-between; margin: 6px 0 0; padding: 7px 0 8px; border-top: 1px solid var(--regla); }
+    .directorio { display: none; border-right: 0; border-bottom: 1px solid var(--regla); }
+    .directorio.abierto { display: flex; }
+    main { display: block; overflow: visible; }
+    .placa { grid-template-columns: minmax(0, 1fr); min-height: 0; padding: 18px 16px; }
+    .placa h1 { font-size: 24px; }
+    .direccion { font-size: 14px; }
+    .filtros { min-height: 0; padding: 14px 16px 16px; }
+    .campo { flex-basis: 100%; max-width: none; }
+    .campo input, .buscar { height: 44px; font-size: 16px; }
+    .boton { height: 44px; }
+    .ayuda { display: block; position: static; padding: 0; background: none; color: var(--tinta-2); }
+    .datos, .ruta { padding-inline: 16px; }
+    .datos p { order: 1; flex-basis: 100%; }
+    .datos .boton { margin-left: auto; }
+    .ruta { flex-wrap: wrap; }
+    .ruta code { flex-basis: 100%; }
+    th, td { padding-inline: 12px; }
+    th:first-child, td:first-child { padding-left: 16px; }
+    th { position: static; }
+    .aviso { padding: 24px 16px; }
+    .ruta button { height: 44px; }
+  }
 </style>
 </head>
 <body>
-<header class="bar">
-  <div>
-    <h1>Distribuidora Aurora</h1>
-    <p>Portal interno de consultas. Empresa y datos de demostración.</p>
+<a class="saltar" href="#resultado">Saltar al resultado</a>
+
+<header class="barra">
+  <p class="marca">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="2" fill="#ffc800"/><path d="M5.5 15a6.5 6.5 0 0 1 13 0zM4 17h16v2.2H4z" fill="#15181b"/></svg>
+    Distribuidora Aurora <span>Portal de consultas</span>
+  </p>
+  <div class="meta">
+    <p>Empresa y datos de demostración</p>
+    <a href="/v1/consultas" target="_blank" rel="noopener">API REST</a>
   </div>
-  <span class="pill">Conectado a la API REST</span>
+  <button class="boton alternar" id="alternar" type="button" aria-expanded="false" aria-controls="directorio">Directorio</button>
 </header>
 
-<div class="layout">
-  <aside>
-    <h2 class="paso"><b>1</b> Elige una consulta</h2>
-    <input class="buscar" id="buscar" type="search" placeholder="Buscar" aria-label="Buscar en el catálogo de consultas">
-    <nav id="catalogo" aria-label="Catálogo de consultas"></nav>
-    <h2 class="paso"><b>2</b> Acota el resultado</h2>
-    <div id="filtros"></div>
+<div class="marco">
+  <aside class="directorio" id="directorio">
+    <input class="buscar" id="buscar" type="search" placeholder="Buscar consulta" aria-label="Buscar en el directorio de consultas">
+    <nav id="catalogo" aria-label="Directorio de consultas"></nav>
+    <p class="pie" id="pie"></p>
   </aside>
 
   <main>
-    <section class="panel">
-      <h2 class="paso"><b>3</b> Resultado</h2>
-      <div id="resultado" aria-live="polite"></div>
-    </section>
+    <header class="placa" id="placa">
+      <div><h1>Portal de consultas</h1><a class="direccion" href="/v1/consultas" target="_blank" rel="noopener">/v1/consultas</a></div>
+    </header>
+    <section class="filtros" id="filtros" aria-label="Filtros"></section>
+    <section class="resultado" id="resultado" aria-label="Resultado" aria-busy="true" tabindex="-1"></section>
+    <footer class="ruta" id="ruta" aria-label="Petición a la API">
+      <span class="metodo">GET</span><code><b>/v1/consultas</b></code><span class="estado pendiente">enviando…</span>
+    </footer>
   </main>
 </div>
 
@@ -146,17 +239,20 @@
 //   GET  /v1/consultas              el catálogo
 //   GET  /v1/consultas/{id}         qué devuelve una consulta y qué filtros acepta
 //   POST /v1/consultas/{id}/datos   sus filas
-// No hay una pantalla programada por consulta: la lista, los filtros y la tabla salen de esas respuestas.
+// No hay una pantalla programada por consulta: el directorio, los filtros y la tabla salen de esas respuestas.
 
 const $ = id => document.getElementById(id);
 const SISTEMAS = { ventas: "Punto de venta", almacen: "Almacén", soporte: "Mesa de ayuda" };
 const TIPOS_INPUT = { int: "number", date: "date", str: "text" };
-const fechaCorta = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", year: "numeric" });
+const fechaCorta = new Intl.DateTimeFormat("es-MX", { day: "2-digit", month: "short", year: "numeric" });
+const llano = texto => texto.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();   // «dia» encuentra «día»
 
 const estado = {
   catalogo: [],      // respuesta de GET /v1/consultas
   ficha: null,       // respuesta de GET /v1/consultas/{id} para la consulta elegida
   parametros: {},    // nombre -> texto escrito en el formulario
+  respuesta: null,   // estado HTTP y milisegundos de la última petición de datos; null si aún no se envía
+  turno: 0,          // descarta la respuesta de una consulta que ya se dejó atrás
 };
 
 // Todo lo que viene de la API entra como nodo de texto, nunca como HTML.
@@ -166,14 +262,36 @@ function el(tag, props = {}, ...hijos) {
   return nodo;
 }
 
+// Cada petición vuelve con su estado HTTP y su duración: es lo que muestra la franja de abajo.
 async function api(ruta, opciones) {
-  const respuesta = await fetch(ruta, opciones);
-  const cuerpo = await respuesta.json();
-  if (!respuesta.ok) throw new Error(cuerpo.detail || respuesta.statusText);
-  return cuerpo;
+  const inicio = performance.now();
+  let status, ok = false, cuerpo = {};
+  try {
+    const respuesta = await fetch(ruta, opciones);
+    ({ status, ok } = respuesta);
+    cuerpo = await respuesta.json().catch(() => ({}));   // un 502 del proxy llega como HTML
+  } catch { /* sin red o con la API caída no hay estado que mostrar */ }
+  const error = ok ? null
+    : typeof cuerpo.detail === "string" ? cuerpo.detail
+    : status ? `La API respondió ${status}.` : "La API no responde.";
+  return { status, cuerpo, error, ms: Math.round(performance.now() - inicio) };
 }
 
-/* ---------- La consulta vive en la URL: recargar o compartir el enlace la conserva ---------- */
+function aviso(titulo, texto, ...acciones) {
+  return el("div", { className: "aviso" }, el("h2", { textContent: titulo }), el("p", { textContent: texto }), acciones);
+}
+function falla(titulo, texto, status) {
+  const nodo = Object.assign(aviso(titulo, texto), { role: "alert" });
+  nodo.firstChild.prepend(el("span", { className: "estado error", textContent: status ?? "sin respuesta" }));
+  return nodo;
+}
+
+function mostrar(...nodos) {
+  $("resultado").replaceChildren(...nodos);
+  $("resultado").removeAttribute("aria-busy");
+}
+
+/* ---------- La consulta vive en la URL: recargar, compartir el enlace o ir atrás la conserva ---------- */
 
 function leerUrl() {
   const hash = new URLSearchParams(location.hash.slice(1));
@@ -188,62 +306,98 @@ function escribirUrl() {
   history.replaceState(null, "", "#" + hash);
 }
 
-/* ---------- Paso 1: el catálogo ---------- */
+function desdeUrl() {
+  const { id, parametros } = leerUrl();
+  if (estado.catalogo.some(c => c.id === id)) return elegir(id, parametros);
+  // El portal abre con datos: sin consulta en el enlace, la primera del directorio.
+  const primera = $("catalogo").querySelector("a");
+  if (primera) location.replace(primera.hash);   // dispara hashchange y vuelve a entrar aquí
+}
 
-function pintarCatalogo() {
-  const filtro = $("buscar").value.trim().toLowerCase();
-  const visibles = estado.catalogo.filter(c => `${c.nombre} ${c.descripcion} ${c.sistema}`.toLowerCase().includes(filtro));
+/* ---------- Directorio ---------- */
+
+function pintarDirectorio() {
+  const buscado = $("buscar").value.trim();
+  const visibles = estado.catalogo.filter(c => llano(`${c.nombre} ${c.descripcion} ${SISTEMAS[c.sistema] ?? c.sistema}`).includes(llano(buscado)));
   // Primero los sistemas que el portal conoce por nombre; uno nuevo aparece al final con su clave.
   const sistemas = [...new Set([...Object.keys(SISTEMAS), ...visibles.map(c => c.sistema)])]
     .filter(sistema => visibles.some(c => c.sistema === sistema));
 
   $("catalogo").replaceChildren(...(sistemas.length ? sistemas.flatMap(sistema => [
-    el("p", { className: "sistema", textContent: SISTEMAS[sistema] ?? sistema }),
+    el("h2", { className: "rotulo", textContent: SISTEMAS[sistema] ?? sistema }),
     ...visibles.filter(c => c.sistema === sistema).map(consulta => {
-      const boton = el("button", { className: "item", type: "button", textContent: consulta.nombre, title: consulta.descripcion });
-      boton.dataset.id = consulta.id;
-      if (consulta.id === estado.ficha?.id) boton.setAttribute("aria-current", "true");
-      boton.addEventListener("click", () => elegir(consulta.id));
-      return boton;
+      const enlace = el("a", { href: "#c=" + encodeURIComponent(consulta.id), textContent: consulta.nombre, title: consulta.descripcion.trim() });
+      if (consulta.id === estado.ficha?.id) enlace.setAttribute("aria-current", "page");
+      return enlace;
     }),
-  ]) : [el("p", { className: "vacio", textContent: "Ninguna consulta coincide con la búsqueda." })]));
+  ]) : [el("p", { className: "vacio", textContent: `Ninguna consulta coincide con «${buscado}».` })]));
 }
 
-async function elegir(id, parametros = {}) {
-  try {
-    estado.ficha = await api(`/v1/consultas/${encodeURIComponent(id)}`);
-  } catch (error) {
-    $("resultado").replaceChildren(el("p", { role: "alert", textContent: error.message }));
-    return;
-  }
-  estado.parametros = parametros;
-  pintarCatalogo();
-  pintarFiltros();
+async function elegir(id, parametros) {
+  const turno = ++estado.turno;
+  const { status, cuerpo, error } = await api(`/v1/consultas/${encodeURIComponent(id)}`);
+  if (turno !== estado.turno) return;
+  if (error) return mostrar(falla("No se pudo abrir la consulta", error, status));
+
+  Object.assign(estado, { ficha: cuerpo, parametros, respuesta: null });
+  $("directorio").classList.remove("abierto");
+  $("alternar").setAttribute("aria-expanded", "false");
+  const pintar = () => { pintarDirectorio(); pintarPlaca(); pintarFiltros(); pintarRuta(); };
+  if (document.startViewTransition) document.startViewTransition(pintar).ready.catch(() => {});
+  else pintar();
+
   // Se ejecuta de entrada, salvo que la consulta exija algún filtro que todavía no se ha llenado.
-  if (estado.ficha.parametros.every(p => !p.requerido || estado.parametros[p.nombre])) ejecutar();
-  else pintarCabecera(el("p", { className: "vacio", textContent: "Llena los filtros marcados con * y consulta." }));
+  if (cuerpo.parametros.every(p => !p.requerido || parametros[p.nombre])) ejecutar();
+  else mostrar(aviso("Faltan filtros", "Llena los filtros marcados con * y consulta."));
 }
 
-/* ---------- Paso 2: los filtros, generados de los parámetros que declara la consulta ---------- */
+/* ---------- Placa ---------- */
+
+function pintarPlaca() {
+  const { ficha } = estado;
+  const direccion = `/v1/consultas/${encodeURIComponent(ficha.id)}`;
+  document.title = `${ficha.nombre} · Distribuidora Aurora`;
+  $("placa").replaceChildren(
+    el("div", {},
+      el("h1", { textContent: ficha.nombre }),
+      el("a", { className: "direccion", href: direccion, target: "_blank", rel: "noopener", textContent: direccion, title: "Abrir la ficha de esta consulta en la API" })),
+    el("p", {}, el("b", { textContent: `${SISTEMAS[ficha.sistema] ?? ficha.sistema}. ` }), ficha.descripcion.trim()));
+}
+
+/* ---------- Filtros ---------- */
 
 function pintarFiltros() {
   const declarados = estado.ficha.parametros;
-  if (!declarados.length) {
-    $("filtros").replaceChildren(el("p", { className: "vacio", textContent: "Esta consulta no tiene filtros." }));
-    return;
-  }
-  const form = el("form", {}, declarados.map(p =>
-    el("label", { className: "campo" }, p.nombre + (p.requerido ? " *" : ""),
-      el("input", { name: p.nombre, type: TIPOS_INPUT[p.tipo] ?? "text", required: p.requerido, value: estado.parametros[p.nombre] ?? "" }),
-      el("small", { textContent: p.descripcion }))),
-    el("button", { className: "primario", type: "submit", textContent: "Consultar" }));
-  form.addEventListener("submit", evento => {
-    evento.preventDefault();
+  if (!declarados.length) return $("filtros").replaceChildren(el("p", { className: "vacio", textContent: "Esta consulta no tiene filtros." }));
+
+  const limpiar = el("button", { className: "boton", type: "button", textContent: "Limpiar", disabled: !Object.keys(estado.parametros).length });
+  const form = el("form", {},
+    declarados.map(p => {
+      const entrada = el("input", { id: "f-" + p.nombre, name: p.nombre, type: TIPOS_INPUT[p.tipo] ?? "text", required: p.requerido,
+                                    value: estado.parametros[p.nombre] ?? "", autocomplete: "off" });
+      entrada.setAttribute("aria-describedby", "a-" + p.nombre);
+      return el("div", { className: "campo" },
+        el("label", { htmlFor: entrada.id, textContent: p.nombre + (p.requerido ? " *" : "") }), entrada,
+        el("p", { className: "ayuda", id: "a-" + p.nombre, textContent: p.descripcion.trim() }));
+    }),
+    el("div", { className: "acciones" }, el("button", { className: "boton primario", type: "submit", textContent: "Consultar" }), limpiar));
+
+  const leer = () => {
     estado.parametros = {};
     for (const [nombre, valor] of new FormData(form)) if (valor !== "") estado.parametros[nombre] = valor;
-    ejecutar();
-  });
+    limpiar.disabled = !Object.keys(estado.parametros).length;
+  };
+  // La petición se arma a la vista: cada tecla cambia el cuerpo en la franja de abajo, sin enviarlo.
+  form.addEventListener("input", () => { leer(); estado.respuesta = null; pintarRuta(); });
+  form.addEventListener("submit", evento => { evento.preventDefault(); leer(); ejecutar(); });
+  limpiar.addEventListener("click", limpiarFiltros);
   $("filtros").replaceChildren(form);
+}
+
+function limpiarFiltros() {
+  estado.parametros = {};
+  pintarFiltros();
+  ejecutar();
 }
 
 // Los valores salen con el tipo que declara la consulta; uno mal escrito se manda tal cual
@@ -257,50 +411,25 @@ function parametrosTipados() {
   return salida;
 }
 
-/* ---------- Paso 3: el resultado ---------- */
+/* ---------- Resultado ---------- */
 
 async function ejecutar() {
   escribirUrl();
   const { id } = estado.ficha;
-  $("resultado").classList.add("cargando");   // se conserva el resultado anterior mientras llega el nuevo
-  try {
-    const datos = await api(`/v1/consultas/${encodeURIComponent(id)}/datos`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ parametros: parametrosTipados() }),
-    });
-    if (id === estado.ficha.id) pintarCabecera(...pintarTabla(id, datos.filas));   // por si ya se eligió otra
-  } catch (error) {
-    pintarCabecera(el("p", { role: "alert", textContent: error.message }));
-  }
-  $("resultado").classList.remove("cargando");
-}
+  estado.respuesta = { enviando: true };
+  pintarRuta();
+  $("resultado").setAttribute("aria-busy", "true");   // se conserva el resultado anterior mientras llega el nuevo
 
-function pintarCabecera(...contenido) {
-  const { ficha } = estado;
-  $("resultado").replaceChildren(
-    el("div", { className: "cabecera" },
-      el("div", {},
-        el("p", { className: "origen", textContent: SISTEMAS[ficha.sistema] ?? ficha.sistema }),
-        el("h3", { className: "titulo", textContent: ficha.nombre }),
-        el("p", { className: "descripcion", textContent: ficha.descripcion })),
-      ficha.notas ? el("p", { className: "nota", textContent: ficha.notas }) : []),
-    pintarPeticion(),
-    ...contenido);
-}
-
-function pintarPeticion() {
-  const ruta = `/v1/consultas/${estado.ficha.id}/datos`;
-  const cuerpo = JSON.stringify({ parametros: parametrosTipados() });
-  const copiar = el("button", { type: "button", textContent: "Copiar como curl" });
-  copiar.addEventListener("click", async () => {
-    await navigator.clipboard.writeText(`curl -X POST ${location.origin}${ruta} -H 'Content-Type: application/json' -d '${cuerpo}'`);
-    copiar.textContent = "Copiado";
-    setTimeout(() => { copiar.textContent = "Copiar como curl"; }, 1500);
+  const { status, cuerpo, error, ms } = await api(`/v1/consultas/${encodeURIComponent(id)}/datos`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ parametros: parametrosTipados() }),
   });
-  return el("div", { className: "peticion" },
-    el("p", { textContent: "Lo que esta página le pidió a la API" }),
-    el("code", { textContent: `POST ${ruta}\n${cuerpo}` }), copiar);
+  if (id !== estado.ficha.id) return;   // ya se eligió otra consulta
+
+  estado.respuesta = { status, ms, ok: !error };
+  pintarRuta();
+  mostrar(...(error ? [falla("La consulta no se pudo ejecutar", error, status)] : pintarTabla(id, cuerpo.filas)));
 }
 
 // Cómo se muestra cada columna se decide por sus valores: números a la derecha y con los
@@ -310,56 +439,94 @@ function formatoDe(filas, columna) {
   if (valores.length && valores.every(valor => typeof valor === "number")) {
     const decimales = Math.min(2, Math.max(0, ...valores.map(v => (String(v).split(".")[1] ?? "").length)));
     const numero = new Intl.NumberFormat("es-MX", { minimumFractionDigits: decimales, maximumFractionDigits: decimales });
-    return { clase: "num", texto: valor => numero.format(valor) };
+    return { clase: "dato num", texto: valor => numero.format(valor) };
   }
   if (valores.length && valores.every(valor => /^\d{4}-\d{2}-\d{2}$/.test(valor))) {
-    return { clase: "", texto: valor => fechaCorta.format(new Date(`${valor}T00:00`)) };
+    return { clase: "dato", texto: valor => fechaCorta.format(new Date(`${valor}T00:00`)) };
   }
   return { clase: "", texto: String };
 }
 
 function pintarTabla(id, filas) {
-  if (!filas.length) return [el("p", { className: "vacio", style: "margin-top: 24px", textContent: "Ninguna fila cumple con estos filtros." })];
+  const cuenta = el("strong", { role: "status", textContent: `${filas.length.toLocaleString("es-MX")} ${filas.length === 1 ? "fila" : "filas"}` });
+  const nota = el("p", { textContent: estado.ficha.notas?.trim() ?? "" });
 
+  if (!filas.length) {
+    const conFiltros = Object.keys(estado.parametros).length;
+    const quitar = el("button", { className: "boton", type: "button", textContent: "Limpiar filtros" });
+    quitar.addEventListener("click", limpiarFiltros);
+    return [el("div", { className: "datos" }, cuenta, nota),
+            aviso("Ninguna fila cumple con estos filtros", conFiltros ? "Quita alguno para ampliar el resultado." : "La consulta no devolvió filas.", ...(conFiltros ? [quitar] : []))];
+  }
+
+  // ponytail: los encabezados son las claves de la API tal cual y no se ordena ni se pagina;
+  // rótulos propios u orden pedirían que el manifiesto los declare.
   const columnas = Object.keys(filas[0]);
   const formatos = columnas.map(columna => formatoDe(filas, columna));
 
-  const descargar = el("button", { className: "secundario", type: "button", textContent: "Descargar CSV" });
+  const descargar = el("button", { className: "boton bajar", type: "button", textContent: "Descargar CSV" });
   descargar.addEventListener("click", () => {
     const celda = valor => `"${String(valor ?? "").replaceAll('"', '""')}"`;
     const csv = [columnas, ...filas.map(fila => columnas.map(c => fila[c]))].map(f => f.map(celda).join(",")).join("\n");
-    const enlace = el("a", { href: URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv" })), download: `${id}.csv` });
+    const enlace = el("a", { href: URL.createObjectURL(new Blob(["\uFEFF" + csv], { type: "text/csv" })), download: `${id}.csv` });
     enlace.click();
     URL.revokeObjectURL(enlace.href);
   });
 
-  return [
-    el("div", { className: "acciones" },
-      el("p", { textContent: `${filas.length.toLocaleString("es-MX")} ${filas.length === 1 ? "fila" : "filas"}` }), descargar),
-    el("div", { className: "tabla" }, el("table", {},
-      el("thead", {}, el("tr", {}, columnas.map((columna, i) => el("th", { scope: "col", className: formatos[i].clase, textContent: columna })))),
-      el("tbody", {}, filas.map(fila => el("tr", {}, columnas.map((columna, i) =>
-        el("td", { className: formatos[i].clase, textContent: fila[columna] == null ? "—" : formatos[i].texto(fila[columna]) }))))))),
-  ];
+  const tabla = el("table", {},
+    el("thead", {}, el("tr", {},
+      columnas.map((columna, i) => el("th", { scope: "col", className: formatos[i].clase.replace("dato", ""), textContent: columna })),
+      el("th", { className: "relleno", ariaHidden: "true" }))),
+    el("tbody", {}, filas.map(fila => el("tr", {},
+      columnas.map((columna, i) => el("td", { className: formatos[i].clase, textContent: fila[columna] == null ? "—" : formatos[i].texto(fila[columna]) })),
+      el("td", { className: "relleno", ariaHidden: "true" })))));
+  tabla.setAttribute("aria-label", estado.ficha.nombre);
+
+  return [el("div", { className: "datos" }, cuenta, nota, descargar), el("div", { className: "tabla" }, tabla)];
+}
+
+/* ---------- Ruta: la petición de datos de la consulta, tal como sale ---------- */
+
+function pintarRuta() {
+  const { ficha, respuesta } = estado;
+  const ruta = `/v1/consultas/${encodeURIComponent(ficha.id)}/datos`;
+  const cuerpo = JSON.stringify({ parametros: parametrosTipados() });
+
+  const copiar = el("button", { type: "button", textContent: "Copiar como cURL" });
+  copiar.addEventListener("click", async () => {
+    let hecho = "Copiado";
+    try { await navigator.clipboard.writeText(`curl -X POST ${location.origin}${ruta} -H 'Content-Type: application/json' -d '${cuerpo.replaceAll("'", "'\\''")}'`); }
+    catch { hecho = "No se pudo copiar"; }
+    copiar.textContent = hecho;
+    setTimeout(() => { copiar.textContent = "Copiar como cURL"; }, 1500);
+  });
+
+  const situacion = !respuesta ? [el("span", { className: "estado pendiente", textContent: "sin enviar" })]
+    : respuesta.enviando ? [el("span", { className: "estado pendiente", textContent: "enviando…" })]
+    : [el("span", { className: "estado " + (respuesta.ok ? "ok" : "error"), textContent: respuesta.status ?? "sin respuesta" }),
+       el("span", { textContent: `${respuesta.ms} ms` })];
+
+  $("ruta").replaceChildren(el("span", { className: "metodo", textContent: "POST" }), el("code", {}, el("b", { textContent: ruta }), " " + cuerpo), ...situacion, copiar);
 }
 
 /* ---------- Arranque ---------- */
 
 async function arrancar() {
-  try {
-    estado.catalogo = await api("/v1/consultas");
-  } catch (error) {
-    $("catalogo").replaceChildren(el("p", { role: "alert", textContent: `No se pudo leer el catálogo: ${error.message}` }));
-    return;
+  const { status, cuerpo, error } = await api("/v1/consultas");
+  if (error) {
+    Object.assign($("ruta").querySelector(".estado"), { className: "estado error", textContent: status ?? "sin respuesta" });
+    return mostrar(falla("No se pudo leer el catálogo", `${error} Revisa que la API esté arriba y recarga la página.`, status));
   }
-  pintarCatalogo();
-  // La página abre con datos: si el enlace no trae consulta, se elige la primera de la lista.
-  const { id, parametros } = leerUrl();
-  const inicial = estado.catalogo.some(c => c.id === id) ? id : $("catalogo").querySelector(".item")?.dataset.id;
-  if (inicial) elegir(inicial, inicial === id ? parametros : {});
+  estado.catalogo = cuerpo;
+  pintarDirectorio();
+  $("pie").textContent = `${cuerpo.length} consultas en ${new Set(cuerpo.map(c => c.sistema)).size} sistemas`;
+  desdeUrl();
 }
 
-$("buscar").addEventListener("input", pintarCatalogo);
+$("buscar").addEventListener("input", pintarDirectorio);
+$("alternar").addEventListener("click", () => $("alternar").setAttribute("aria-expanded", $("directorio").classList.toggle("abierto")));
+document.querySelector(".saltar").addEventListener("click", evento => { evento.preventDefault(); $("resultado").focus(); });
+addEventListener("hashchange", desdeUrl);
 arrancar();
 </script>
 </body>
