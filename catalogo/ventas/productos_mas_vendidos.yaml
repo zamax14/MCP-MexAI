@@ -1,0 +1,26 @@
+id: productos_mas_vendidos
+nombre: Productos más vendidos
+sistema: ventas
+descripcion: >
+  Productos ordenados por importe vendido en el periodo, con su categoría y sus
+  unidades. El SKU es el mismo que usa el almacén.
+notas: |
+  Importes en pesos mexicanos.
+parametros:
+  - nombre: desde
+    tipo: date
+    descripcion: Primer día a incluir, en formato AAAA-MM-DD. Omitir para los últimos 30 días.
+  - nombre: hasta
+    tipo: date
+    descripcion: Último día a incluir, en formato AAAA-MM-DD. Omitir para llegar hasta hoy.
+  - nombre: sucursal
+    tipo: str
+    descripcion: Centro, Norte, Sur o Poniente. Omitir para todas.
+sql: |
+  SELECT sku, producto, categoria, SUM(unidades)::int AS unidades, SUM(total)::numeric AS importe
+  FROM ventas
+  WHERE fecha >= COALESCE(CAST(:desde AS date), CURRENT_DATE - 30)
+    AND (CAST(:hasta AS date) IS NULL OR fecha <= CAST(:hasta AS date))
+    AND (CAST(:sucursal AS text) IS NULL OR sucursal = CAST(:sucursal AS text))
+  GROUP BY sku, producto, categoria
+  ORDER BY importe DESC

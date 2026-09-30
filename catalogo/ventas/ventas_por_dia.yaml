@@ -1,0 +1,26 @@
+id: ventas_por_dia
+nombre: Ventas por día y sucursal
+sistema: ventas
+descripcion: >
+  Unidades vendidas e importe de cada día, por sucursal. Sirve para saber cuánto se
+  vendió ayer, ver la tendencia y comparar sucursales.
+notas: |
+  Importes en pesos mexicanos.
+parametros:
+  - nombre: desde
+    tipo: date
+    descripcion: Primer día a incluir, en formato AAAA-MM-DD. Omitir para los últimos 30 días.
+  - nombre: hasta
+    tipo: date
+    descripcion: Último día a incluir, en formato AAAA-MM-DD. Omitir para llegar hasta hoy.
+  - nombre: sucursal
+    tipo: str
+    descripcion: Centro, Norte, Sur o Poniente. Omitir para todas.
+sql: |
+  SELECT fecha, sucursal, SUM(unidades)::int AS unidades, SUM(total)::numeric AS importe
+  FROM ventas
+  WHERE fecha >= COALESCE(CAST(:desde AS date), CURRENT_DATE - 30)
+    AND (CAST(:hasta AS date) IS NULL OR fecha <= CAST(:hasta AS date))
+    AND (CAST(:sucursal AS text) IS NULL OR sucursal = CAST(:sucursal AS text))
+  GROUP BY fecha, sucursal
+  ORDER BY fecha, sucursal

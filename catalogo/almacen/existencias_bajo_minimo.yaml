@@ -1,0 +1,22 @@
+id: existencias_bajo_minimo
+nombre: Existencias por debajo del mínimo
+sistema: almacen
+descripcion: >
+  Productos cuya existencia está por debajo del mínimo que debe tener su almacén, con
+  cuántas piezas faltan para alcanzarlo. Es la lista de lo que hay que resurtir.
+notas: |
+  Hay un almacén por sucursal. El SKU es el mismo que usa el punto de venta.
+parametros:
+  - nombre: almacen
+    tipo: str
+    descripcion: Centro, Norte, Sur o Poniente. Omitir para todos.
+  - nombre: categoria
+    tipo: str
+    descripcion: Papelería, Cómputo, Limpieza o Mobiliario. Omitir para todas.
+sql: |
+  SELECT sku, producto, categoria, almacen, existencia, minimo, minimo - existencia AS faltante
+  FROM existencias
+  WHERE existencia < minimo
+    AND (CAST(:almacen AS text) IS NULL OR almacen = CAST(:almacen AS text))
+    AND (CAST(:categoria AS text) IS NULL OR categoria = CAST(:categoria AS text))
+  ORDER BY almacen, faltante DESC

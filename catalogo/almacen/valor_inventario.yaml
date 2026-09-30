@@ -1,0 +1,17 @@
+id: valor_inventario
+nombre: Valor del inventario
+sistema: almacen
+descripcion: >
+  Piezas en existencia y su valor a costo, por almacén y categoría.
+notas: |
+  El valor es existencia por costo unitario, en pesos mexicanos. No es precio de venta.
+parametros:
+  - nombre: almacen
+    tipo: str
+    descripcion: Centro, Norte, Sur o Poniente. Omitir para todos.
+sql: |
+  SELECT almacen, categoria, SUM(existencia)::int AS piezas, SUM(existencia * costo_unitario)::numeric AS valor
+  FROM existencias
+  WHERE (CAST(:almacen AS text) IS NULL OR almacen = CAST(:almacen AS text))
+  GROUP BY almacen, categoria
+  ORDER BY almacen, valor DESC

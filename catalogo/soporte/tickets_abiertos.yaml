@@ -1,0 +1,23 @@
+id: tickets_abiertos
+nombre: Tickets abiertos
+sistema: soporte
+descripcion: >
+  Tickets de la mesa de ayuda que siguen sin cerrarse, con su prioridad, área, asunto,
+  agente asignado y cuántos días llevan abiertos.
+notas: |
+  Las prioridades son urgente, alta, media y baja. Un ticket urgente con varios días
+  abierto está fuera del tiempo de atención esperado.
+parametros:
+  - nombre: prioridad
+    tipo: str
+    descripcion: urgente, alta, media o baja. Omitir para todas.
+  - nombre: area
+    tipo: str
+    descripcion: Facturación, Entregas, Garantías o Sistemas. Omitir para todas.
+sql: |
+  SELECT folio, abierto_en, CURRENT_DATE - abierto_en AS dias_abierto, prioridad, area, asunto, agente
+  FROM tickets
+  WHERE estado = 'abierto'
+    AND (CAST(:prioridad AS text) IS NULL OR prioridad = CAST(:prioridad AS text))
+    AND (CAST(:area AS text) IS NULL OR area = CAST(:area AS text))
+  ORDER BY array_position(ARRAY['urgente', 'alta', 'media', 'baja'], prioridad), dias_abierto DESC

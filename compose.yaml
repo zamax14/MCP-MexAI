@@ -1,29 +1,35 @@
-# `docker compose up --build` y abre http://localhost:8000
+# `docker compose up --build`
+#   http://localhost:8000   la web, la API REST (/v1, /docs) y el servidor MCP (/mcp)
 name: mcp-presentacion
 
 services:
+  # Un solo PostgreSQL con una base por sistema interno: ventas, almacen y soporte.
   db:
     image: postgres:17-alpine
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin
-      POSTGRES_DB: demo
     volumes:
-      # Solo corre cuando la base nace vacía. Para resembrar: `docker compose down -v`.
-      - ./db/seed.sql:/docker-entrypoint-initdb.d/seed.sql:ro
-    # Sin `ports`: a la base solo se llega desde la red de compose.
+      # Solo corre cuando el servidor nace vacío. Para resembrar: `docker compose down -v`.
+      - ./db/init.sh:/docker-entrypoint-initdb.d/init.sh:ro
+      - ./db:/semilla:ro
+    # Sin `ports`: a las bases solo se llega desde la red de compose.
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d demo"]
+      # `soporte` es la última base que se siembra: si el rol de lectura ya ve sus
+      # tickets, las tres están listas.
+      test: ["CMD-SHELL", "psql -U lector -d soporte -c 'SELECT 1 FROM tickets LIMIT 1'"]
       interval: 2s
       timeout: 3s
-      retries: 15
+      retries: 30
 
   api:
     build: .
     environment:
-      # Una variable por base: el campo `base` de cada manifiesto elige cuál usa.
+      # Una variable por sistema: el campo `sistema` de cada manifiesto elige cuál usa.
       # El rol `lector` solo tiene SELECT.
-      DSN_DEMO: postgresql+psycopg://lector:lector@db:5432/demo
+      DSN_VENTAS: postgresql+psycopg://lector:lector@db:5432/ventas
+      DSN_ALMACEN: postgresql+psycopg://lector:lector@db:5432/almacen
+      DSN_SOPORTE: postgresql+psycopg://lector:lector@db:5432/soporte
     ports:
       # Solo en localhost: el servicio no tiene autenticación. Para sacarlo a internet
       # en la demo, `tailscale funnel 8000`.
@@ -41,3 +47,4 @@ services:
     command:
       ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000",
        "--reload", "--reload-dir", "app", "--reload-dir", "catalogo", "--reload-include", "*.yaml"]
+

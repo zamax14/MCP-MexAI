@@ -1,0 +1,22 @@
+id: tickets_por_semana
+nombre: Tickets por semana
+sistema: soporte
+descripcion: >
+  Cuántos tickets se recibieron cada semana, cuántos de esos ya se cerraron y en
+  cuántos días se resolvieron en promedio.
+notas: |
+  La semana empieza en lunes y la actual va incompleta. El promedio solo cuenta los
+  tickets ya cerrados.
+parametros:
+  - nombre: desde
+    tipo: date
+    descripcion: Primer día a incluir, en formato AAAA-MM-DD. Omitir para las últimas 8 semanas.
+sql: |
+  SELECT date_trunc('week', abierto_en)::date AS semana,
+         COUNT(*)::int AS recibidos,
+         COUNT(cerrado_en)::int AS ya_cerrados,
+         ROUND(AVG(cerrado_en - abierto_en), 1) AS dias_promedio_resolucion
+  FROM tickets
+  WHERE abierto_en >= COALESCE(CAST(:desde AS date), CURRENT_DATE - 56)
+  GROUP BY semana
+  ORDER BY semana

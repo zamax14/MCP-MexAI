@@ -9,7 +9,7 @@ from fastmcp import FastMCP
 from app.api import app as api
 
 # 1. Cada ruta de la API se vuelve una tool: nombre, descripción y esquema salen del OpenAPI.
-mcp = FastMCP.from_fastapi(app=api, name="Banco de indicadores")
+mcp = FastMCP.from_fastapi(app=api, name="Consultas de Distribuidora Aurora")
 mcp_app = mcp.http_app(path="/mcp")
 
 # 2. Un solo proceso sirve las dos superficies: MCP en /mcp y la API de siempre en /v1.

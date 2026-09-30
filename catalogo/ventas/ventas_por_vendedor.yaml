@@ -1,0 +1,25 @@
+id: ventas_por_vendedor
+nombre: Ventas por vendedor
+sistema: ventas
+descripcion: >
+  Importe y unidades que vendió cada vendedor en el periodo, con su sucursal.
+notas: |
+  Importes en pesos mexicanos. Cada vendedor pertenece a una sola sucursal.
+parametros:
+  - nombre: desde
+    tipo: date
+    descripcion: Primer día a incluir, en formato AAAA-MM-DD. Omitir para los últimos 30 días.
+  - nombre: hasta
+    tipo: date
+    descripcion: Último día a incluir, en formato AAAA-MM-DD. Omitir para llegar hasta hoy.
+  - nombre: sucursal
+    tipo: str
+    descripcion: Centro, Norte, Sur o Poniente. Omitir para todas.
+sql: |
+  SELECT vendedor, sucursal, SUM(unidades)::int AS unidades, SUM(total)::numeric AS importe
+  FROM ventas
+  WHERE fecha >= COALESCE(CAST(:desde AS date), CURRENT_DATE - 30)
+    AND (CAST(:hasta AS date) IS NULL OR fecha <= CAST(:hasta AS date))
+    AND (CAST(:sucursal AS text) IS NULL OR sucursal = CAST(:sucursal AS text))
+  GROUP BY vendedor, sucursal
+  ORDER BY importe DESC

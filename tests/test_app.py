@@ -12,24 +12,25 @@ client = TestClient(app)
 
 
 def test_catalog_loads_every_manifest():
-    assert len(load()) == len(client.get("/v1/indicadores").json()) >= 4
-    assert [i["tema"] for i in client.get("/v1/indicadores", params={"tema": "pobreza"}).json()] == ["pobreza"]
+    assert len(load()) == len(client.get("/v1/consultas").json()) >= 7
+    assert {q["sistema"] for q in client.get("/v1/consultas", params={"sistema": "almacen"}).json()} == {"almacen"}
 
 
 def test_sql_never_leaves_the_server():
     for id in load():
-        assert "sql" not in client.get(f"/v1/indicadores/{id}").json()
+        assert "sql" not in client.get(f"/v1/consultas/{id}").json()
 
 
 def test_invalid_requests_say_why():
-    assert client.get("/v1/indicadores/no_existe").status_code == 404
+    assert client.get("/v1/consultas/no_existe").status_code == 404
 
-    unknown = client.post("/v1/indicadores/pobreza_municipal/datos", json={"parametros": {"anio": 2020}})
+    unknown = client.post("/v1/consultas/ventas_por_dia/datos", json={"parametros": {"tienda": "Norte"}})
     assert unknown.status_code == 400
-    assert "cve_geo" in unknown.json()["detail"]  # nombra los que sí acepta
+    assert "sucursal" in unknown.json()["detail"]  # nombra los que sí acepta
 
-    bad_type = client.post("/v1/indicadores/pobreza_municipal/datos", json={"parametros": {"anio_min": "dosmil"}})
-    assert bad_type.status_code == 400
+    bad_date = client.post("/v1/consultas/ventas_por_dia/datos", json={"parametros": {"desde": "ayer"}})
+    assert bad_date.status_code == 400
+    assert "desde" in bad_date.json()["detail"]
 
 
 def test_every_route_is_an_mcp_tool():
@@ -37,4 +38,4 @@ def test_every_route_is_an_mcp_tool():
         async with Client(mcp) as session:
             return {tool.name for tool in await session.list_tools()}
 
-    assert asyncio.run(names()) == {"listar_indicadores", "describir_indicador", "consultar_indicador"}
+    assert asyncio.run(names()) == {"listar_consultas", "describir_consulta", "ejecutar_consulta"}
