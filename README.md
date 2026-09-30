@@ -38,8 +38,8 @@ los reportes los arma el asistente.
 ## Pruébalo con un comando
 
 ```bash
-git clone <url-de-este-repositorio>
-cd mcp-presentacion
+git clone https://github.com/zamax14/MCP-MexAI.git
+cd MCP-MexAI
 docker compose up --build
 ```
 
