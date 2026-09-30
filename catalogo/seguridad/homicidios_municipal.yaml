@@ -1,0 +1,28 @@
+id: homicidios_municipal
+nombre: Homicidios dolosos, municipal
+tema: seguridad
+definicion: >
+  Número de homicidios dolosos registrados en el municipio durante el año.
+unidad: casos
+fuente: Datos sintéticos de demostración (no son cifras oficiales)
+base: demo
+periodicidad: anual
+notas: |
+  Es un conteo, no una tasa: no es comparable entre municipios de distinto tamaño.
+parametros:
+  - nombre: cve_geo
+    tipo: str
+    descripcion: Clave INEGI de 5 dígitos del municipio (ej. 14039). Omitir para todos.
+  - nombre: anio_min
+    tipo: int
+    descripcion: Año inicial de la serie. Omitir para la serie completa.
+sql: |
+  SELECT
+      cve_mun         AS cve_geo,
+      municipio       AS nombre_geo,
+      anio::text      AS periodo,
+      homicidios::integer AS valor
+  FROM seguridad_municipal
+  WHERE (CAST(:cve_geo AS text) IS NULL OR cve_mun = CAST(:cve_geo AS text))
+    AND (CAST(:anio_min AS integer) IS NULL OR anio >= CAST(:anio_min AS integer))
+  ORDER BY cve_geo, periodo
