@@ -1,0 +1,43 @@
+# `docker compose up --build` y abre http://localhost:8000
+name: mcp-presentacion
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: demo
+    volumes:
+      # Solo corre cuando la base nace vacía. Para resembrar: `docker compose down -v`.
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/seed.sql:ro
+    # Sin `ports`: a la base solo se llega desde la red de compose.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d demo"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  api:
+    build: .
+    environment:
+      # Una variable por base: el campo `base` de cada manifiesto elige cuál usa.
+      # El rol `lector` solo tiene SELECT.
+      DSN_DEMO: postgresql+psycopg://lector:lector@db:5432/demo
+    ports:
+      # Solo en localhost: el servicio no tiene autenticación. Para sacarlo a internet
+      # en la demo, `tailscale funnel 8000`.
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    # Montados para que editar código, la web o un manifiesto se vea sin reconstruir.
+    volumes:
+      - ./app:/srv/app:ro
+      - ./catalogo:/srv/catalogo:ro
+      - ./web:/srv/web:ro
+      - ./tests:/srv/tests:ro
+    # Cambia `app.main:app` por `app.api:app` para ver la API de antes, sin MCP.
+    command:
+      ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000",
+       "--reload", "--reload-dir", "app", "--reload-dir", "catalogo", "--reload-include", "*.yaml"]
