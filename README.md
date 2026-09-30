@@ -21,7 +21,7 @@ esa misma API se convierte en un servidor [MCP](https://modelcontextprotocol.io)
 cualquier cliente compatible puede usar. El servicio solo entrega filas: las gráficas, los cruces y
 los reportes los arma el asistente.
 
-![El portal de consultas mostrando las ventas por día de una sucursal](docs/portal.png)
+![El portal de consultas de Distribuidora Aurora con los tickets abiertos del área de Entregas](docs/portal.png)
 
 ## Por qué usarlo
 
@@ -272,6 +272,7 @@ app/main.py       el bloque que la vuelve servidor MCP
 catalogo/         un YAML por consulta, en una carpeta por sistema
 db/               las tres bases de ejemplo
 web/index.html    el portal, un HTML estático que solo usa la API
+web/fonts/        la tipografía del portal, servida desde el propio repositorio
 tests/            pruebas que no necesitan base de datos
 ```
 
@@ -285,3 +286,6 @@ docker compose exec api python -m pytest -p no:cacheprovider
 
 Nació como la demo de la charla «MCP: deja de reinventar la rueda» para MexAI Community. Se publica
 bajo licencia [MIT](LICENSE): úsalo, modifícalo y llévalo a tu empresa.
+
+El portal usa las tipografías Overpass y Overpass Mono, incluidas en [`web/fonts/`](web/fonts/) bajo la
+licencia SIL Open Font License 1.1.
