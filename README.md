@@ -287,5 +287,8 @@ docker compose exec api python -m pytest -p no:cacheprovider
 Nació como la demo de la charla «MCP: deja de reinventar la rueda» para MexAI Community. Se publica
 bajo licencia [MIT](LICENSE): úsalo, modifícalo y llévalo a tu empresa.
 
+Las diapositivas de la charla están en [`output/`](output/), con las notas del ponente; se generan con
+`redesign_deck.mjs` a partir de las ilustraciones de [`assets/`](assets/).
+
 El portal usa las tipografías Overpass y Overpass Mono, incluidas en [`web/fonts/`](web/fonts/) bajo la
 licencia SIL Open Font License 1.1.
