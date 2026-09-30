@@ -4,180 +4,667 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Banco de indicadores</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Sin red la página cae a la fuente del sistema: la demo no depende de esto. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&display=swap">
 <style>
   :root {
     color-scheme: light dark;
-    --bg: light-dark(#faf7f2, #17151c);
-    --panel: light-dark(#ffffff, #211e29);
-    --text: light-dark(#23202b, #ece8f3);
-    --muted: light-dark(#6b6678, #a39db3);
-    --line: light-dark(#e4dfd6, #35303f);
-    --accent: light-dark(#6b3fa0, #b794f4);
-    --accent-text: light-dark(#ffffff, #17151c);
+    --paper: light-dark(#f4f3f8, #121019);
+    --surface: light-dark(#ffffff, #1b1826);
+    --ink: light-dark(#1b1630, #f2f0f8);
+    --ink-2: light-dark(#55506a, #bdb8cf);
+    --muted: light-dark(#7d7892, #8c87a0);
+    --line: light-dark(#e2dfec, #2e2a3d);
+    --brand: light-dark(#5b2ea6, #b79af0);
+    --brand-ink: light-dark(#ffffff, #17131f);
+    --brand-wash: light-dark(#efe9fa, #2a2340);
+    --bar: #1b1630;
+    --bar-ink: #f2f0f8;
+    --bar-muted: #a9a3c2;
+    --yellow: #f5c518;
     --warn: light-dark(#8a5a00, #f2c14e);
+    /* Series de la gráfica: orden fijo, nunca se reasignan por posición. */
+    --s0: light-dark(#2a78d6, #3987e5);
+    --s1: light-dark(#eb6834, #d95926);
+    --s2: light-dark(#1baf7a, #199e70);
+    --s3: light-dark(#eda100, #c98500);
+    --heat: light-dark(#2a78d6, #3987e5);
+    --sans: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 16px/1.5 system-ui, sans-serif; background: var(--bg); color: var(--text); }
-  header, footer { padding: 16px 24px; }
-  header { border-bottom: 1px solid var(--line); }
-  h1 { margin: 0; font-size: 1.25rem; }
-  header p, .muted { margin: 0; color: var(--muted); font-size: .9rem; }
-  .layout { display: grid; grid-template-columns: 280px 1fr; gap: 24px; padding: 24px; align-items: start; }
-  @media (max-width: 720px) { .layout { grid-template-columns: 1fr; padding: 16px; } }
-  nav h2 { margin: 16px 0 4px; font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-  nav h2:first-child { margin-top: 0; }
-  nav button { display: block; width: 100%; text-align: left; padding: 8px 10px; border: 0; border-radius: 6px;
-               background: none; color: inherit; font: inherit; cursor: pointer; }
-  nav button:hover { background: var(--panel); }
-  nav button[aria-current] { background: var(--accent); color: var(--accent-text); }
-  main { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 24px; }
-  main h2 { margin: 0 0 4px; font-size: 1.4rem; }
-  dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 16px 0; font-size: .9rem; }
-  dt { color: var(--muted); }
-  dd { margin: 0; }
-  .notas { border-left: 3px solid var(--warn); padding: 4px 12px; margin: 16px 0; font-size: .9rem; }
-  form { display: flex; flex-wrap: wrap; gap: 16px; align-items: start; margin: 24px 0 16px; }
-  label { display: grid; gap: 4px; font-size: .85rem; font-weight: 600; }
-  label small { font-weight: 400; color: var(--muted); max-width: 30ch; }
-  input { font: inherit; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px;
-          background: var(--bg); color: inherit; width: 14ch; }
-  form button { font: inherit; padding: 8px 18px; border: 0; border-radius: 6px; background: var(--accent);
-                color: var(--accent-text); font-weight: 600; cursor: pointer; margin-top: 24px; }
-  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-  .tabla { overflow-x: auto; }
+  html, body { height: 100%; }
+  body { margin: 0; font: 15px/1.5 var(--sans); background: var(--paper); color: var(--ink);
+         display: grid; grid-template-rows: auto 1fr; }
+  button, input { font: inherit; color: inherit; }
+  :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+  [hidden] { display: none !important; }
+
+  /* Barra superior */
+  .bar { background: var(--bar); color: var(--bar-ink); padding: 14px 24px; display: flex; gap: 16px 32px;
+         align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .bar h1 { margin: 0; font-size: 1.35rem; font-weight: 800; font-stretch: 118%; letter-spacing: -.01em; }
+  .bar p { margin: 0; color: var(--bar-muted); font-size: .85rem; }
+  .estado { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: .85rem; }
+  .pill { display: inline-flex; align-items: center; gap: 8px; padding: 5px 12px; border-radius: 99px;
+          border: 1px solid #3a3357; color: var(--bar-ink); background: none; }
+  .pill::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #5ed39a; }
+  .pill.off { color: var(--bar-muted); }
+  .pill.off::before { background: #6b6584; }
+  .pill.mcp:not(.off) { border-color: var(--yellow); }
+  .pill.mcp:not(.off)::before { background: var(--yellow); }
+  button.pill { cursor: pointer; }
+  button.pill:hover { background: #2a2346; }
+  .bar :focus-visible { outline-color: var(--yellow); }
+
+  /* Estructura */
+  .layout { display: grid; grid-template-columns: 320px minmax(0, 1fr); min-height: 0; }
+  aside { border-right: 1px solid var(--line); background: var(--surface); padding: 20px; overflow-y: auto; }
+  main { padding: 24px; overflow-y: auto; }
+  @media (max-width: 860px) {
+    body { display: block; }
+    .layout { grid-template-columns: 1fr; }
+    aside { border-right: 0; border-bottom: 1px solid var(--line); }
+    main { padding: 16px; }
+  }
+  .paso { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; font-size: 1rem; font-weight: 700; }
+  aside .paso:not(:first-child) { margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--line); }
+  .paso b { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+            background: var(--brand); color: var(--brand-ink); font-size: .8rem; }
+
+  /* Paso 1: catálogo */
+  .buscar { width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px;
+            background: var(--paper); margin-bottom: 12px; }
+  details + details { border-top: 1px solid var(--line); }
+  summary { display: flex; justify-content: space-between; align-items: center; padding: 10px 2px; cursor: pointer;
+            font-weight: 700; text-transform: capitalize; list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  summary::before { content: "▸"; margin-right: 8px; color: var(--muted); transition: rotate .15s; }
+  details[open] summary::before { rotate: 90deg; }
+  summary span { margin-left: auto; color: var(--muted); font-weight: 400; font-size: .85rem; }
+  .item { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; padding: 8px 10px; margin: 0 -4px 4px;
+          border-radius: 8px; cursor: pointer; }
+  .item:hover { background: var(--paper); }
+  .item:has(input:checked) { background: var(--brand-wash); }
+  .item input { accent-color: var(--brand); width: 16px; height: 16px; margin: 3px 0 0; }
+  .item small { grid-column: 2; color: var(--muted); }
+  .vacio { color: var(--muted); padding: 8px 2px; }
+
+  /* Paso 2: acotar */
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; min-width: 0; }
+  form { display: grid; gap: 14px; }
+  .campo { display: grid; gap: 4px; font-size: .85rem; font-weight: 700; }
+  .campo small { font-weight: 400; color: var(--muted); }
+  .campo input { padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); width: 100%; }
+  .primario { padding: 10px 22px; border: 0; border-radius: 8px; background: var(--brand);
+              color: var(--brand-ink); font-weight: 700; cursor: pointer; }
+  .primario:hover { filter: brightness(1.1); }
+
+  /* Paso 3: resultado */
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; border-bottom: 1px solid var(--line); margin: 0 -20px 20px; padding: 0 20px; }
+  .tabs button { border: 0; background: none; padding: 8px 14px; cursor: pointer; color: var(--ink-2);
+                 border-bottom: 3px solid transparent; margin-bottom: -1px; }
+  .tabs button[aria-selected="true"] { color: var(--ink); font-weight: 700; border-bottom-color: var(--brand); }
+  #resultado { transition: opacity .15s; }
+  #resultado.cargando { opacity: .5; }
+  .cabecera { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); gap: 16px 40px; align-items: start; }
+  @media (max-width: 1100px) { .cabecera { grid-template-columns: minmax(0, 1fr); } }
+  .titulo { margin: 0; font-size: 1.7rem; line-height: 1.15; font-weight: 800; font-stretch: 112%; letter-spacing: -.015em; }
+  .definicion { margin: 8px 0 0; color: var(--ink-2); max-width: 70ch; }
+  .ficha { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 16px 0 0; font-size: .9rem; }
+  .ficha div { display: grid; }
+  .ficha dt { color: var(--muted); font-size: .8rem; }
+  .ficha dd { margin: 0; font-weight: 600; }
+  .nota { margin: 0; padding: 8px 14px; border-left: 3px solid var(--warn); background: var(--paper);
+          border-radius: 0 8px 8px 0; font-size: .9rem; }
+  [role="alert"] { color: var(--warn); font-weight: 700; }
+
+  /* La petición: lo que pidió la web y lo que pediría un agente */
+  .peticion { margin: 20px 0 0; background: var(--bar); color: var(--bar-ink); border-radius: 10px; padding: 14px 16px;
+              display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px 14px; align-items: start;
+              font: 13px/1.5 var(--mono); }
+  .peticion em { font: 700 12px/1.6 var(--sans); font-style: normal; padding: 1px 8px; border-radius: 4px;
+                 background: #352d56; color: var(--bar-ink); }
+  .peticion em.mcp { background: var(--yellow); color: #1b1630; }
+  .peticion code { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .peticion code.off { color: var(--bar-muted); font-family: var(--sans); }
+  .peticion button { border: 1px solid #3a3357; background: none; color: var(--bar-ink); border-radius: 6px;
+                     padding: 2px 10px; cursor: pointer; font: 12px/1.6 var(--sans); }
+  .peticion button:hover { background: #2a2346; }
+  .peticion :focus-visible { outline-color: var(--yellow); }
+  @media (max-width: 600px) {
+    .peticion { grid-template-columns: auto minmax(0, 1fr); }
+    .peticion button { grid-column: 2; justify-self: start; }
+    .peticion span:empty { display: none; }
+  }
+
+  /* Gráfica */
+  .grafica { position: relative; margin: 24px 0 0; }
+  .grafica svg { display: block; width: 100%; overflow: visible; outline-offset: 6px; border-radius: 4px; }
+  .grafica text { font: 12px var(--sans); fill: var(--muted); font-variant-numeric: tabular-nums; }
+  .grafica .fin { fill: var(--ink-2); }
+  .grid { stroke: var(--line); stroke-width: 1; }
+  .serie { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .punto { stroke: var(--surface); stroke-width: 2; }
+  .mira { stroke: var(--muted); stroke-width: 1; }
+  .tip { position: absolute; top: 0; left: 0; pointer-events: none; background: var(--surface); border: 1px solid var(--line);
+         border-radius: 8px; padding: 8px 12px; box-shadow: 0 6px 20px rgb(27 22 48 / .16); font-size: .85rem;
+         white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .tip strong { display: block; margin-bottom: 4px; }
+  .tip div { display: grid; grid-template-columns: 14px auto 1fr; gap: 8px; align-items: center; }
+  .tip i { height: 2px; border-radius: 1px; }
+  .tip b { text-align: right; }
+  .tip span { color: var(--ink-2); }
+  .aviso { color: var(--muted); margin: 24px 0 0; }
+
+  /* Tabla */
+  .acciones { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin: 24px 0 8px; }
+  .acciones p { margin: 0; color: var(--muted); font-size: .85rem; }
+  .secundario { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 6px 14px; cursor: pointer; }
+  .secundario:hover { border-color: var(--brand); }
+  .tabla { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
   table { border-collapse: collapse; width: 100%; font-size: .9rem; font-variant-numeric: tabular-nums; }
-  th, td { padding: 6px 12px; border-bottom: 1px solid var(--line); text-align: left; }
-  th { color: var(--muted); font-weight: 600; }
-  td:last-child, th:last-child { text-align: right; }
-  [role="alert"] { color: var(--warn); font-weight: 600; }
-  footer { border-top: 1px solid var(--line); font-size: .9rem; color: var(--muted); }
-  code { font: .9em ui-monospace, monospace; background: var(--panel); border: 1px solid var(--line);
-         border-radius: 4px; padding: 1px 6px; color: var(--text); }
+  th, td { padding: 7px 12px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--line); }
+  tr:last-child > * { border-bottom: 0; }
+  thead th { color: var(--muted); font-weight: 600; background: var(--surface); }
+  th:first-child { text-align: left; position: sticky; left: 0; background: var(--surface); }
+  tbody th { font-weight: 400; }
+  tbody tr:has(input:checked) th { font-weight: 700; }
+  tbody label { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  tbody input { accent-color: var(--brand); width: 15px; height: 15px; margin: 0; }
+  tbody i { width: 14px; height: 3px; border-radius: 2px; flex: none; }
+  td.plana { text-align: left; }
 </style>
 </head>
 <body>
-<header>
-  <h1>Banco de indicadores</h1>
-  <p>Un catálogo de consultas declarado en manifiestos YAML. Esta página solo usa la API REST.</p>
+<header class="bar">
+  <div>
+    <h1>Banco de indicadores</h1>
+    <p>Constructor de consultas sobre un catálogo de manifiestos YAML, con datos sintéticos.</p>
+  </div>
+  <div class="estado">
+    <span class="pill">API REST</span>
+    <button class="pill mcp off" id="mcp" type="button" disabled>Comprobando MCP</button>
+  </div>
 </header>
 
 <div class="layout">
-  <nav id="lista" aria-label="Indicadores"></nav>
-  <main id="ficha" aria-live="polite"><p class="muted">Elige un indicador de la lista.</p></main>
+  <aside>
+    <h2 class="paso"><b>1</b> Elige indicadores</h2>
+    <input class="buscar" id="buscar" type="search" placeholder="Buscar en el catálogo" aria-label="Buscar en el catálogo">
+    <div id="catalogo"></div>
+    <h2 class="paso"><b>2</b> Acota la consulta</h2>
+    <div id="acotar"></div>
+  </aside>
+
+  <main>
+    <section class="panel">
+      <h2 class="paso"><b>3</b> Resultado</h2>
+      <div id="resultado" aria-live="polite"></div>
+    </section>
+  </main>
 </div>
 
-<footer id="mcp">Comprobando si esta API también habla MCP…</footer>
-
 <script>
-const lista = document.getElementById("lista");
-const ficha = document.getElementById("ficha");
+const $ = id => document.getElementById(id);
+const numero = new Intl.NumberFormat("es-MX", { maximumFractionDigits: 2 });
+const MAX_SERIES = 4;
+
+const estado = {
+  catalogo: [],            // vista reducida de GET /v1/indicadores
+  fichas: new Map(),       // id -> metadata completa
+  elegidos: [],            // ids marcados, en el orden en que se marcaron
+  parametros: {},          // nombre -> texto del formulario
+  activo: null,            // pestaña visible
+  respuestas: new Map(),   // id -> { datos } | { error }
+  series: new Map(),       // cve_geo -> color (0..3); sigue al municipio, no a su posición
+  mcp: false,
+};
 
 // Todo lo que viene de la API entra como nodo de texto, nunca como HTML.
-function el(tag, props = {}, ...children) {
-  const node = Object.assign(document.createElement(tag), props);
-  node.append(...children);
-  return node;
+function el(tag, props = {}, ...hijos) {
+  const nodo = Object.assign(document.createElement(tag), props);
+  nodo.append(...hijos.flat());
+  return nodo;
 }
 
-async function api(path, options) {
-  const response = await fetch(path, options);
-  const body = await response.json();
-  if (!response.ok) throw new Error(body.detail || response.statusText);
-  return body;
+function svg(tag, attrs = {}, ...hijos) {
+  const nodo = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  for (const [clave, valor] of Object.entries(attrs)) nodo.setAttribute(clave, valor);
+  nodo.append(...hijos.flat());
+  return nodo;
 }
 
-async function cargarLista() {
-  const indicadores = await api("/v1/indicadores");
-  for (const tema of [...new Set(indicadores.map(i => i.tema))]) {
-    lista.append(el("h2", { textContent: tema }));
-    for (const ind of indicadores.filter(i => i.tema === tema)) {
-      const boton = el("button", { type: "button", textContent: ind.nombre });
-      boton.dataset.id = ind.id;
-      boton.addEventListener("click", () => { location.hash = ind.id; });
-      lista.append(boton);
-    }
+async function api(ruta, opciones) {
+  const respuesta = await fetch(ruta, opciones);
+  const cuerpo = await respuesta.json();
+  if (!respuesta.ok) throw new Error(cuerpo.detail || respuesta.statusText);
+  return cuerpo;
+}
+
+/* ---------- La consulta vive en la URL: recargar o compartir el enlace la conserva ---------- */
+
+function leerUrl() {
+  const hash = new URLSearchParams(location.hash.slice(1));
+  estado.elegidos = (hash.get("i") || "").split(",").filter(id => estado.catalogo.some(ind => ind.id === id));
+  estado.parametros = {};
+  for (const [clave, valor] of hash) if (clave.startsWith("p.")) estado.parametros[clave.slice(2)] = valor;
+}
+
+function escribirUrl() {
+  const hash = new URLSearchParams();
+  if (estado.elegidos.length) hash.set("i", estado.elegidos.join(","));
+  for (const [nombre, valor] of Object.entries(estado.parametros)) hash.set("p." + nombre, valor);
+  history.replaceState(null, "", "#" + hash.toString().replaceAll("%2C", ","));
+}
+
+/* ---------- Paso 1: el catálogo ---------- */
+
+function pintarCatalogo() {
+  const filtro = $("buscar").value.trim().toLowerCase();
+  const visibles = estado.catalogo.filter(ind => (ind.nombre + " " + ind.id + " " + ind.tema).toLowerCase().includes(filtro));
+  const temas = [...new Set(visibles.map(ind => ind.tema))];
+
+  $("catalogo").replaceChildren(...(temas.length ? temas.map(tema => {
+    const delTema = visibles.filter(ind => ind.tema === tema);
+    return el("details", { open: true },
+      el("summary", {}, tema, el("span", { textContent: delTema.length })),
+      delTema.map(ind => {
+        const casilla = el("input", { type: "checkbox", checked: estado.elegidos.includes(ind.id) });
+        casilla.addEventListener("change", () => alternar(ind.id, casilla.checked));
+        return el("label", { className: "item" }, casilla, el("span", { textContent: ind.nombre }),
+          el("small", { textContent: `${ind.unidad}, ${ind.periodicidad}` }));
+      }));
+  }) : [el("p", { className: "vacio", textContent: "Ningún indicador coincide con la búsqueda." })]));
+}
+
+function alternar(id, marcado) {
+  estado.elegidos = estado.elegidos.filter(otro => otro !== id);
+  if (marcado) { estado.elegidos.push(id); estado.activo = id; }
+  consultar();
+}
+
+/* ---------- Paso 2: acotar ---------- */
+
+// Un solo formulario con la unión de los parámetros que declaran los manifiestos elegidos.
+function parametrosDeclarados() {
+  const vistos = new Map();
+  for (const id of estado.elegidos) {
+    for (const p of estado.fichas.get(id)?.parametros ?? []) if (!vistos.has(p.nombre)) vistos.set(p.nombre, p);
   }
+  return [...vistos.values()];
 }
 
-// El indicador elegido vive en la URL: recargar o compartir el enlace lo conserva.
-function elegir() {
-  const id = decodeURIComponent(location.hash.slice(1));
-  if (!id) return;
-  for (const boton of lista.querySelectorAll("button")) {
-    boton.toggleAttribute("aria-current", boton.dataset.id === id);
+function pintarAcotar() {
+  const declarados = parametrosDeclarados();
+  if (!declarados.length) {
+    $("acotar").replaceChildren(el("p", { className: "vacio", textContent: estado.elegidos.length
+      ? "Estos indicadores no declaran parámetros."
+      : "Marca un indicador para ver con qué se puede acotar." }));
+    return;
   }
-  mostrar(id).catch(error => ficha.replaceChildren(el("p", { role: "alert", textContent: error.message })));
-}
-
-async function mostrar(id) {
-  const ind = await api(`/v1/indicadores/${encodeURIComponent(id)}`);
-  const resultado = el("div");
-
-  // El formulario sale de los parámetros que declara el manifiesto: no hay uno por indicador.
-  const form = el("form");
-  for (const p of ind.parametros) {
-    form.append(el("label", {},
-      p.nombre + (p.requerido ? " *" : ""),
-      el("input", { name: p.nombre, type: p.tipo === "int" ? "number" : "text", required: p.requerido }),
-      el("small", { textContent: p.descripcion })));
-  }
-  form.append(el("button", { type: "submit", textContent: "Consultar" }));
+  const form = el("form", {}, declarados.map(p =>
+    el("label", { className: "campo" }, p.nombre + (p.requerido ? " *" : ""),
+      el("input", { name: p.nombre, type: p.tipo === "int" ? "number" : "text", required: p.requerido,
+                    value: estado.parametros[p.nombre] ?? "" }),
+      el("small", { textContent: p.descripcion }))),
+    el("button", { className: "primario", type: "submit", textContent: "Consultar" }));
   form.addEventListener("submit", evento => {
     evento.preventDefault();
-    const parametros = {};
-    for (const [nombre, valor] of new FormData(form)) if (valor !== "") parametros[nombre] = valor;
-    consultar(id, parametros, resultado);
+    estado.parametros = {};
+    for (const [nombre, valor] of new FormData(form)) if (valor !== "") estado.parametros[nombre] = valor;
+    consultar();
+  });
+  $("acotar").replaceChildren(form);
+}
+
+// A cada indicador solo se le mandan los parámetros que él declara, ya con su tipo.
+function parametrosPara(id) {
+  const salida = {};
+  for (const p of estado.fichas.get(id).parametros) {
+    const valor = estado.parametros[p.nombre];
+    if (valor !== undefined) salida[p.nombre] = p.tipo === "int" && !Number.isNaN(Number(valor)) ? Number(valor) : valor;
+  }
+  return salida;
+}
+
+async function consultar() {
+  escribirUrl();
+  $("resultado").classList.add("cargando");   // se conserva el resultado anterior mientras llega el nuevo
+  try {
+    await Promise.all(estado.elegidos.filter(id => !estado.fichas.has(id)).map(async id =>
+      estado.fichas.set(id, await api(`/v1/indicadores/${encodeURIComponent(id)}`))));
+    pintarAcotar();
+    estado.respuestas = new Map(await Promise.all(estado.elegidos.map(async id => {
+      try {
+        return [id, { datos: await api(`/v1/indicadores/${encodeURIComponent(id)}/datos`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ parametros: parametrosPara(id) }),
+        }) }];
+      } catch (error) {
+        return [id, { error: error.message }];
+      }
+    })));
+    if (!estado.elegidos.includes(estado.activo)) estado.activo = estado.elegidos[0] ?? null;
+    pintarResultado();
+  } catch (error) {
+    $("resultado").replaceChildren(el("p", { role: "alert", textContent: `No se pudo consultar: ${error.message}` }));
+  }
+  $("resultado").classList.remove("cargando");
+}
+
+/* ---------- Paso 3: resultado ---------- */
+
+// Si las filas siguen la convención (cve_geo, nombre_geo, periodo, valor) se cruzan en lugar × periodo.
+function cruzar(filas) {
+  if (!filas.length || !["cve_geo", "nombre_geo", "periodo", "valor"].every(c => c in filas[0])) return null;
+  const periodos = [...new Set(filas.map(f => f.periodo))].sort();
+  const lugares = new Map();
+  for (const fila of filas) {
+    if (!lugares.has(fila.cve_geo)) lugares.set(fila.cve_geo, { clave: fila.cve_geo, nombre: fila.nombre_geo, valores: new Map() });
+    lugares.get(fila.cve_geo).valores.set(fila.periodo, fila.valor);
+  }
+  const valores = filas.map(f => f.valor).filter(v => typeof v === "number");
+  // Todos los valores con los mismos decimales: 3.2 y 5.52 en una misma columna se leen mal.
+  const decimales = Math.min(2, Math.max(0, ...valores.map(v => (String(v).split(".")[1] ?? "").length)));
+  const formato = new Intl.NumberFormat("es-MX", { minimumFractionDigits: decimales, maximumFractionDigits: decimales });
+  return { periodos, lugares: [...lugares.values()], min: Math.min(...valores), max: Math.max(...valores), formato };
+}
+
+function colorLibre() {
+  const usados = new Set(estado.series.values());
+  return [...Array(MAX_SERIES).keys()].find(color => !usados.has(color));
+}
+
+function pintarResultado() {
+  const destino = $("resultado");
+  if (!estado.activo) {
+    destino.replaceChildren(el("p", { className: "vacio", textContent: "Aquí aparecerán la gráfica y la tabla de los indicadores que elijas." }));
+    return;
+  }
+  const id = estado.activo;
+  const ficha = estado.fichas.get(id);
+  const { datos, error } = estado.respuestas.get(id);
+
+  const tabs = el("div", { className: "tabs", role: "tablist", hidden: estado.elegidos.length < 2 }, estado.elegidos.map(otro => {
+    const tab = el("button", { type: "button", role: "tab", ariaSelected: String(otro === id), textContent: estado.fichas.get(otro).nombre });
+    tab.addEventListener("click", () => { estado.activo = otro; pintarResultado(); });
+    return tab;
+  }));
+
+  const cabecera = [
+    el("div", { className: "cabecera" },
+      el("div", {},
+        el("h3", { className: "titulo", textContent: ficha.nombre }),
+        el("p", { className: "definicion", textContent: ficha.definicion }),
+        el("dl", { className: "ficha" }, [["Unidad", ficha.unidad], ["Periodicidad", ficha.periodicidad], ["Fuente", ficha.fuente]]
+          .map(([termino, valor]) => el("div", {}, el("dt", { textContent: termino }), el("dd", { textContent: valor }))))),
+      ficha.notas ? el("p", { className: "nota", textContent: ficha.notas }) : []),
+    pintarPeticion(id),
+  ];
+
+  if (error) {
+    destino.replaceChildren(tabs, ...cabecera, el("p", { role: "alert", textContent: error }));
+    return;
+  }
+
+  const cruce = cruzar(datos.filas);
+  if (!cruce) {   // el manifiesto no sigue la convención: tabla tal cual, sin gráfica
+    destino.replaceChildren(tabs, ...cabecera, accionesTabla(id, datos), tablaPlana(datos.filas));
+    return;
+  }
+
+  // Las series marcadas se conservan entre indicadores; la primera vez se proponen tres.
+  for (const clave of estado.series.keys()) if (!cruce.lugares.some(l => l.clave === clave)) estado.series.delete(clave);
+  if (!estado.series.size) cruce.lugares.slice(0, 3).forEach((lugar, i) => estado.series.set(lugar.clave, i));
+
+  const grafica = el("div", { className: "grafica" });
+  destino.replaceChildren(tabs, ...cabecera, grafica, accionesTabla(id, datos), tablaCruzada(cruce, ficha));
+  pintarGrafica(grafica, cruce, ficha);
+}
+
+function pintarPeticion(id) {
+  const parametros = parametrosPara(id);
+  const cuerpo = JSON.stringify({ parametros });
+  const ruta = `/v1/indicadores/${id}/datos`;
+  const argumentos = JSON.stringify({ id, parametros }, null, 1).replace(/\n\s*/g, " ");
+
+  const copiar = el("button", { type: "button", textContent: "Copiar curl" });
+  copiar.addEventListener("click", async () => {
+    await navigator.clipboard.writeText(`curl -X POST ${location.origin}${ruta} -H 'Content-Type: application/json' -d '${cuerpo}'`);
+    copiar.textContent = "Copiado";
+    setTimeout(() => { copiar.textContent = "Copiar curl"; }, 1500);
   });
 
-  ficha.replaceChildren(
-    el("h2", { textContent: ind.nombre }),
-    el("p", { textContent: ind.definicion }),
-    el("dl", {},
-      el("dt", { textContent: "Unidad" }), el("dd", { textContent: ind.unidad }),
-      el("dt", { textContent: "Periodicidad" }), el("dd", { textContent: ind.periodicidad }),
-      el("dt", { textContent: "Fuente" }), el("dd", { textContent: ind.fuente })),
-    ...(ind.notas ? [el("p", { className: "notas", textContent: ind.notas })] : []),
-    form,
-    resultado);
-
-  // La serie completa se muestra de entrada, salvo que el indicador exija algún parámetro.
-  if (!ind.parametros.some(p => p.requerido)) consultar(id, {}, resultado);
+  return el("div", { className: "peticion" },
+    el("em", { textContent: "REST" }), el("code", { textContent: `POST ${ruta}\n${cuerpo}` }), copiar,
+    el("em", { className: "mcp", textContent: "MCP" }),
+    estado.mcp
+      ? el("code", { textContent: `consultar_indicador ${argumentos}` })
+      : el("code", { className: "off", textContent: "Este servidor todavía no habla MCP: un agente no puede hacer esta consulta." }),
+    el("span"));
 }
 
-async function consultar(id, parametros, destino) {
-  try {
-    const datos = await api(`/v1/indicadores/${encodeURIComponent(id)}/datos`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ parametros }),
-    });
+function accionesTabla(id, datos) {
+  const descargar = el("button", { className: "secundario", type: "button", textContent: "Descargar CSV" });
+  descargar.addEventListener("click", () => {
     const columnas = Object.keys(datos.filas[0] ?? {});
-    destino.replaceChildren(
-      el("p", { className: "muted", textContent: `${datos.filas.length} filas · ${datos.unidad}` }),
-      el("div", { className: "tabla" },
-        el("table", {},
-          el("thead", {}, el("tr", {}, ...columnas.map(c => el("th", { scope: "col", textContent: c })))),
-          el("tbody", {}, ...datos.filas.map(fila =>
-            el("tr", {}, ...columnas.map(c => el("td", { textContent: fila[c] ?? "—" }))))))));
-  } catch (error) {
-    destino.replaceChildren(el("p", { role: "alert", textContent: error.message }));
+    const celda = valor => `"${String(valor ?? "").replaceAll('"', '""')}"`;
+    const csv = [columnas, ...datos.filas.map(fila => columnas.map(c => fila[c]))].map(f => f.map(celda).join(",")).join("\n");
+    const enlace = el("a", { href: URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv" })), download: `${id}.csv` });
+    enlace.click();
+    URL.revokeObjectURL(enlace.href);
+  });
+  return el("div", { className: "acciones" },
+    el("p", { textContent: `${numero.format(datos.filas.length)} filas. Marca hasta ${MAX_SERIES} renglones para graficarlos.` }),
+    descargar);
+}
+
+function tablaCruzada(cruce, ficha) {
+  const rango = cruce.max - cruce.min || 1;
+  const cuerpo = cruce.lugares.map(lugar => {
+    const marcada = estado.series.has(lugar.clave);
+    const casilla = el("input", { type: "checkbox", checked: marcada, disabled: !marcada && estado.series.size >= MAX_SERIES });
+    casilla.addEventListener("change", () => {
+      if (casilla.checked) estado.series.set(lugar.clave, colorLibre()); else estado.series.delete(lugar.clave);
+      pintarResultado();
+    });
+    const muestra = el("i");
+    if (marcada) muestra.style.background = `var(--s${estado.series.get(lugar.clave)})`;
+    return el("tr", {},
+      el("th", { scope: "row" }, el("label", {}, casilla, muestra, el("span", { textContent: lugar.nombre }))),
+      cruce.periodos.map(periodo => {
+        const valor = lugar.valores.get(periodo);
+        const celda = el("td", { textContent: valor == null ? "—" : cruce.formato.format(valor) });
+        // Un solo tono, más intenso donde el valor es mayor; el número sigue siendo el dato.
+        if (typeof valor === "number") {
+          celda.style.background = `color-mix(in srgb, var(--heat) ${Math.round(4 + 34 * (valor - cruce.min) / rango)}%, transparent)`;
+        }
+        return celda;
+      }));
+  });
+  return el("div", { className: "tabla" }, el("table", {},
+    el("caption", { hidden: true, textContent: `${ficha.nombre}, ${ficha.unidad}, por lugar y periodo` }),
+    el("thead", {}, el("tr", {}, el("th", { scope: "col", textContent: "Lugar" }),
+      cruce.periodos.map(periodo => el("th", { scope: "col", textContent: periodo })))),
+    el("tbody", {}, cuerpo)));
+}
+
+function tablaPlana(filas) {
+  const columnas = Object.keys(filas[0] ?? {});
+  return el("div", { className: "tabla" }, el("table", {},
+    el("thead", {}, el("tr", {}, columnas.map(c => el("th", { scope: "col", textContent: c })))),
+    el("tbody", {}, filas.map(fila => el("tr", {}, columnas.map(c => el("td", { className: "plana", textContent: fila[c] ?? "—" })))))));
+}
+
+/* ---------- Gráfica de líneas ---------- */
+
+function marcas(min, max) {
+  const bruto = (max - min || 1) / 4;
+  const base = 10 ** Math.floor(Math.log10(bruto));
+  const paso = [1, 2, 2.5, 5, 10].map(m => m * base).find(p => p >= bruto);
+  const desde = Math.floor(min / paso) * paso;
+  const lista = [];
+  for (let v = desde; v < max + paso; v += paso) lista.push(Number(v.toFixed(10)));
+  return lista;
+}
+
+function pintarGrafica(destino, cruce, ficha) {
+  const series = cruce.lugares.filter(l => estado.series.has(l.clave));
+  if (!series.length) {
+    destino.replaceChildren(el("p", { className: "aviso", textContent: "Marca algún renglón de la tabla para verlo en la gráfica." }));
+    return;
   }
+  const ancho = Math.max(destino.clientWidth, 320);
+  const conEtiquetas = ancho > 560;
+  const alto = 300, izq = 48, der = conEtiquetas ? 172 : 16, arriba = 12, abajo = 30;
+  const n = cruce.periodos.length;
+  const valores = series.flatMap(s => [...s.valores.values()]).filter(v => typeof v === "number");
+  const eje = marcas(Math.min(...valores), Math.max(...valores));
+  const x = i => izq + (n === 1 ? (ancho - izq - der) / 2 : i * (ancho - izq - der) / (n - 1));
+  const y = v => arriba + (alto - arriba - abajo) * (1 - (v - eje[0]) / (eje.at(-1) - eje[0]));
+  const color = s => `var(--s${estado.series.get(s.clave)})`;
+  const cada = Math.ceil(n / Math.max(1, Math.floor((ancho - izq - der) / 56)));   // etiquetas del eje X que caben
+
+  const lienzo = svg("svg", { viewBox: `0 0 ${ancho} ${alto}`, height: alto, role: "img", tabindex: 0,
+    "aria-label": `Gráfica de líneas de ${ficha.nombre}. Los mismos valores están en la tabla de abajo; con las flechas se recorre cada periodo.` });
+
+  lienzo.append(
+    ...eje.map(v => svg("g", {},
+      svg("line", { class: "grid", x1: izq, x2: ancho - der, y1: y(v), y2: y(v) }),
+      svg("text", { x: izq - 10, y: y(v) + 4, "text-anchor": "end" }, numero.format(v)))),
+    ...cruce.periodos.flatMap((periodo, i) => i % cada ? [] : [svg("text", { x: x(i), y: alto - 8, "text-anchor": "middle" }, periodo)]));
+
+  const mira = svg("line", { class: "mira", y1: arriba, y2: alto - abajo, visibility: "hidden" });
+  lienzo.append(mira);
+
+  const finales = [];
+  for (const serie of series) {
+    // Un periodo sin dato corta la línea en vez de inventar un tramo.
+    let trazo = "", pluma = "M", ultimo = null;
+    cruce.periodos.forEach((periodo, i) => {
+      const valor = serie.valores.get(periodo);
+      if (typeof valor !== "number") { pluma = "M"; return; }
+      trazo += `${pluma}${x(i)},${y(valor)}`; pluma = "L"; ultimo = { i, valor };
+    });
+    lienzo.append(svg("path", { class: "serie", d: trazo, stroke: color(serie) }));
+    if (ultimo) {
+      lienzo.append(svg("circle", { class: "punto", cx: x(ultimo.i), cy: y(ultimo.valor), r: 5, fill: color(serie) }));
+      finales.push({ serie, px: x(ultimo.i), py: y(ultimo.valor), ty: y(ultimo.valor) });
+    }
+  }
+
+  // Etiquetas al final de cada línea; si se enciman se separan y un conector las ata a su punto.
+  if (conEtiquetas) {
+    finales.sort((a, b) => a.ty - b.ty);
+    for (let i = 1; i < finales.length; i++) finales[i].ty = Math.max(finales[i].ty, finales[i - 1].ty + 16);
+    const sobra = finales.length ? finales.at(-1).ty - (alto - abajo) : 0;
+    if (sobra > 0) for (let i = finales.length - 1; i >= 0; i--) {
+      finales[i].ty = Math.min(finales[i].ty - sobra, i === finales.length - 1 ? Infinity : finales[i + 1].ty - 16);
+    }
+    for (const f of finales) {
+      if (Math.abs(f.ty - f.py) > 3) lienzo.append(svg("line", { class: "grid", x1: f.px + 7, y1: f.py, x2: f.px + 14, y2: f.ty }));
+      lienzo.append(svg("text", { class: "fin", x: f.px + 18, y: f.ty + 4 }, f.serie.nombre));
+    }
+  }
+
+  const resaltes = series.map(s => svg("circle", { class: "punto", r: 5, fill: color(s), visibility: "hidden" }));
+  lienzo.append(...resaltes);
+
+  // La mira busca el periodo más cercano: nadie tiene que atinarle a una línea de 2 px.
+  const tip = el("div", { className: "tip", hidden: true });
+  let actual = -1;
+  function mostrar(i) {
+    actual = Math.max(0, Math.min(n - 1, i));
+    const periodo = cruce.periodos[actual];
+    mira.setAttribute("x1", x(actual)); mira.setAttribute("x2", x(actual)); mira.setAttribute("visibility", "visible");
+    series.forEach((serie, k) => {
+      const valor = serie.valores.get(periodo);
+      resaltes[k].setAttribute("visibility", typeof valor === "number" ? "visible" : "hidden");
+      if (typeof valor === "number") { resaltes[k].setAttribute("cx", x(actual)); resaltes[k].setAttribute("cy", y(valor)); }
+    });
+    tip.replaceChildren(el("strong", { textContent: periodo }),
+      ...[...series].sort((a, b) => (b.valores.get(periodo) ?? -Infinity) - (a.valores.get(periodo) ?? -Infinity)).map(serie => {
+        const llave = el("i"); llave.style.background = color(serie);
+        const valor = serie.valores.get(periodo);
+        return el("div", {}, llave, el("b", { textContent: valor == null ? "—" : cruce.formato.format(valor) }), el("span", { textContent: serie.nombre }));
+      }));
+    tip.hidden = false;
+    const aLaIzquierda = x(actual) > ancho / 2;
+    tip.style.translate = `${aLaIzquierda ? x(actual) - tip.offsetWidth - 14 : x(actual) + 14}px ${arriba}px`;
+  }
+  function ocultar() {
+    actual = -1; tip.hidden = true; mira.setAttribute("visibility", "hidden");
+    resaltes.forEach(r => r.setAttribute("visibility", "hidden"));
+  }
+  lienzo.addEventListener("pointermove", evento => {
+    const caja = lienzo.getBoundingClientRect();
+    const px = (evento.clientX - caja.left) * ancho / caja.width;
+    mostrar(n === 1 ? 0 : Math.round((px - izq) / ((ancho - izq - der) / (n - 1))));
+  });
+  lienzo.addEventListener("pointerleave", ocultar);
+  lienzo.addEventListener("blur", ocultar);
+  lienzo.addEventListener("keydown", evento => {
+    if (evento.key === "ArrowRight") mostrar(actual + 1);
+    else if (evento.key === "ArrowLeft") mostrar(actual < 0 ? n - 1 : actual - 1);
+    else if (evento.key === "Escape") ocultar();
+    else return;
+    evento.preventDefault();
+  });
+
+  destino.replaceChildren(lienzo, tip);
 }
 
-// Si el servidor arrancó con `app.api:app` no hay /mcp y esto responde 404: es el «antes» de la charla.
-// Con MCP responde 400, porque un GET suelto no trae sesión; basta con que no sea 404.
+/* ---------- Arranque ---------- */
+
+// Se le pide un `initialize` de verdad: si contesta, es un servidor MCP. Arrancado con `app.api:app`
+// no hay quien lo atienda y responde 405: es el «antes» de la charla.
 async function comprobarMcp() {
-  const pie = document.getElementById("mcp");
-  const { status } = await fetch("/mcp");
-  pie.replaceChildren(...(status === 404
-    ? ["Esta API solo habla REST. Todavía no es un servidor MCP."]
-    : ["Esta misma API también es un servidor MCP: conecta tu asistente a ",
-       el("code", { textContent: `${location.origin}/mcp` })]));
+  const boton = $("mcp");
+  const respuesta = await fetch("/mcp", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream" },
+    body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize",
+      params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "web", version: "1" } } }),
+  });
+  respuesta.body?.cancel();
+  estado.mcp = respuesta.ok;
+  boton.classList.toggle("off", !estado.mcp);
+  if (!estado.mcp) { boton.textContent = "Sin MCP: solo REST"; return; }
+  const url = `${location.origin}/mcp`;
+  boton.disabled = false;
+  boton.textContent = `MCP activo en ${url}`;
+  boton.title = "Copiar la URL del servidor MCP";
+  boton.addEventListener("click", async () => {
+    await navigator.clipboard.writeText(url);
+    boton.textContent = "URL copiada";
+    setTimeout(() => { boton.textContent = `MCP activo en ${url}`; }, 1500);
+  });
 }
 
-cargarLista().then(elegir, error => lista.replaceChildren(el("p", { role: "alert", textContent: error.message })));
-addEventListener("hashchange", elegir);
-comprobarMcp();
+async function arrancar() {
+  try {
+    [estado.catalogo] = await Promise.all([api("/v1/indicadores"), comprobarMcp()]);
+  } catch (error) {
+    $("catalogo").replaceChildren(el("p", { role: "alert", textContent: `No se pudo leer el catálogo: ${error.message}` }));
+    return;
+  }
+  leerUrl();
+  // La página abre con datos: si el enlace no trae consulta, se elige el primer indicador.
+  if (!location.hash && estado.catalogo.length) estado.elegidos = [estado.catalogo[0].id];
+  estado.activo = estado.elegidos[0] ?? null;
+  pintarCatalogo();
+  consultar();
+}
+
+$("buscar").addEventListener("input", pintarCatalogo);
+let espera;
+addEventListener("resize", () => { clearTimeout(espera); espera = setTimeout(() => estado.respuestas.has(estado.activo) && pintarResultado(), 150); });
+arrancar();
 </script>
 </body>
 </html>
