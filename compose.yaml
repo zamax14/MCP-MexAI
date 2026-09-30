@@ -1,5 +1,6 @@
 # `docker compose up --build`
-#   http://localhost:8000   la web, la API REST (/v1, /docs) y el servidor MCP (/mcp)
+#   web  http://localhost:8080   el portal de consultas, un cliente de la API
+#   api  http://localhost:8000   la API REST (/v1, /docs) y el servidor MCP (/mcp)
 name: mcp-presentacion
 
 services:
@@ -37,14 +38,23 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    # Montados para que editar código, la web o un manifiesto se vea sin reconstruir.
+    # Montados para que editar código o un manifiesto se vea sin reconstruir.
     volumes:
       - ./app:/srv/app:ro
       - ./catalogo:/srv/catalogo:ro
-      - ./web:/srv/web:ro
       - ./tests:/srv/tests:ro
     # Cambia `app.main:app` por `app.api:app` para ver la API de antes, sin MCP.
     command:
       ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000",
        "--reload", "--reload-dir", "app", "--reload-dir", "catalogo", "--reload-include", "*.yaml"]
 
+  # El portal es otro producto: un HTML estático que solo conoce la API REST.
+  web:
+    image: nginx:alpine
+    ports:
+      - "127.0.0.1:8080:80"
+    volumes:
+      - ./web:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api

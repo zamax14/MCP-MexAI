@@ -7,11 +7,9 @@ Los `operation_id` y los docstrings no son adorno: son el nombre y la descripci�
 los que un agente va a descubrir cada operación.
 """
 
-from pathlib import Path
 from typing import Optional
 
 from fastapi import Body, FastAPI
-from fastapi.staticfiles import StaticFiles
 
 from app import engine
 from app.catalog import find, get, load
@@ -55,7 +53,3 @@ def run_query(id: str, parametros: dict[str, str | int | None] = Body(default={}
     consulta falla en vez de truncar, y el error dice con qué parámetros acotar.
     """
     return engine.execute(id, parametros)
-
-
-# Al final: un mount en "/" atrapa todo lo que no haya coincidido antes.
-app.mount("/", StaticFiles(directory=Path(__file__).resolve().parents[1] / "web", html=True))

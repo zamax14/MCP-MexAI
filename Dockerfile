@@ -8,7 +8,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY app/ app/
 COPY catalogo/ catalogo/
-COPY web/ web/
 COPY tests/ tests/
 
 USER nobody
