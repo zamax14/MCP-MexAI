@@ -288,7 +288,7 @@ Nació como la demo de la charla «MCP: deja de reinventar la rueda» para MexAI
 bajo licencia [MIT](LICENSE): úsalo, modifícalo y llévalo a tu empresa.
 
 La presentación editable, con las notas del ponente incluidas, está en
-[`output/MCP-MexAI.pptx`](output/MCP-MexAI.pptx). Las ilustraciones, capturas, QR y videos
+[`presentacion/MCP-MexAI.pptx`](presentacion/MCP-MexAI.pptx). Las ilustraciones, capturas, QR y videos
 de la charla están organizados en [`assets/`](assets/).
 
 El portal usa las tipografías Overpass y Overpass Mono, incluidas en [`web/fonts/`](web/fonts/) bajo la
