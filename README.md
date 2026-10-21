@@ -10,6 +10,8 @@
 ![FastMCP](https://img.shields.io/badge/FastMCP-MCP-f5c518)
 ![Docker Compose](https://img.shields.io/badge/docker-compose-2a78d6)
 
+**[Ver la presentación (PDF)](presentacion/MCP-MexAI.pdf)** · [Descargar el PowerPoint con notas](presentacion/MCP-MexAI.pptx) · [Video de la demo](assets/videos/aurora_mcp.mp4)
+
 </div>
 
 La información que tu equipo necesita ya existe: vive en el punto de venta, en el almacén, en la mesa
@@ -287,8 +289,9 @@ docker compose exec api python -m pytest -p no:cacheprovider
 Nació como la demo de la charla «MCP: deja de reinventar la rueda» para MexAI Community. Se publica
 bajo licencia [MIT](LICENSE): úsalo, modifícalo y llévalo a tu empresa.
 
-La presentación editable, con las notas del ponente incluidas, está en
-[`presentacion/MCP-MexAI.pptx`](presentacion/MCP-MexAI.pptx). Las ilustraciones, capturas, QR y videos
+Las diapositivas están en [`presentacion/`](presentacion/): en
+[PDF](presentacion/MCP-MexAI.pdf) para verlas desde el navegador, y en
+[PowerPoint](presentacion/MCP-MexAI.pptx) editable, con las notas del ponente incluidas. Las ilustraciones, capturas, QR y videos
 de la charla están organizados en [`assets/`](assets/).
 
 El portal usa las tipografías Overpass y Overpass Mono, incluidas en [`web/fonts/`](web/fonts/) bajo la
